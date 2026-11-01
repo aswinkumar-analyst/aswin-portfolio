@@ -3,13 +3,15 @@ import { ArrowLeftIcon, ArrowRightIcon } from "../../components/ui/Icons";
 import { projects as defaultProjects, workCopy } from "../../config/projects";
 import { gsap, useGSAP } from "../../lib/gsap";
 import { useProjectCarousel } from "../../hooks/useProjectCarousel";
+import GlassBg from "../../components/ui/GlassBg";
+import Eyebrow from "../../components/ui/Eyebrow";
 import ProjectCard from "./ProjectCard";
 
 const GUTTER_L = "pl-5 sm:pl-8 lg:pl-[7.5%]";
 const GUTTER_R = "pr-5 sm:pr-8 lg:pr-[7.5%]";
 
 const arrowButton =
-  "grid size-12 place-items-center rounded-full border border-ink/15 bg-cloud text-ink transition-[background-color,color,scale] duration-300 ease-ui outline-sky hover:bg-ink hover:text-cloud active:scale-95";
+  "relative grid size-12 place-items-center rounded-full text-ink transition-[color,scale] duration-300 ease-ui outline-sky hover:text-sky active:scale-95";
 
 /**
  * Work: sticky intro on the left, draggable infinite card carousel on the
@@ -53,13 +55,11 @@ export default function WorkSection({ copy = workCopy, projects = defaultProject
     >
       <div className={`flex flex-col gap-12 lg:flex-row lg:items-start lg:gap-16 ${GUTTER_L}`}>
         <div className="pr-5 sm:pr-8 lg:sticky lg:top-32 lg:w-[min(26rem,34%)] lg:flex-none lg:pr-0">
-          <p data-reveal className="text-sm font-semibold tracking-[0.14em] text-sky uppercase">
-            {copy.eyebrow}
-          </p>
+          <Eyebrow data-reveal>{copy.eyebrow}</Eyebrow>
           <h2
             id="work-title"
             aria-label={copy.headline}
-            className="mt-6 text-[clamp(2.25rem,1.2rem+3.4vw,4rem)] leading-[1.05] font-semibold tracking-[-0.035em] text-balance text-ink"
+            className="mt-6 text-[clamp(2.25rem,1.2rem+3.4vw,4rem)] leading-[1.05] font-heading font-normal text-balance text-ink"
           >
             {words.map((word, i) => (
               <span key={i} aria-hidden="true">
@@ -81,7 +81,7 @@ export default function WorkSection({ copy = workCopy, projects = defaultProject
             <div className="flex min-w-0 flex-1 items-center gap-4" aria-live="polite">
               <span className="text-sm font-medium text-ink tabular-nums">
                 {String(index + 1).padStart(2, "0")}
-                <span className="text-ink/40"> / {String(total).padStart(2, "0")}</span>
+                <span className="text-ink/65"> / {String(total).padStart(2, "0")}</span>
               </span>
               <span className="relative hidden h-px max-w-40 flex-1 bg-ink/15 sm:block" aria-hidden="true">
                 <span
@@ -92,10 +92,12 @@ export default function WorkSection({ copy = workCopy, projects = defaultProject
             </div>
             <div className="flex gap-2">
               <button type="button" onClick={prev} aria-label="Previous project" className={arrowButton}>
-                <ArrowLeftIcon className="size-5" />
+                <GlassBg radius={24} backgroundOpacity={0.35} distortionScale={-100} />
+                <ArrowLeftIcon className="relative size-5" />
               </button>
               <button type="button" onClick={next} aria-label="Next project" className={arrowButton}>
-                <ArrowRightIcon className="size-5" />
+                <GlassBg radius={24} backgroundOpacity={0.35} distortionScale={-100} />
+                <ArrowRightIcon className="relative size-5" />
               </button>
             </div>
           </div>

@@ -5,6 +5,7 @@ export default function ContactForm() {
 
   const onSubmit = async (event) => {
     event.preventDefault();
+    setResult("Sending....");
     const formData = new FormData(event.target);
     formData.append("access_key", "ee599dac-abb0-44f2-8b99-c6dfb132ff64");
 
@@ -14,7 +15,12 @@ export default function ContactForm() {
     });
 
     const data = await response.json();
-    setResult(data.success ? "Success!" : "Error");
+    if (data.success) {
+      setResult("Form Submitted Successfully");
+      event.target.reset();
+    } else {
+      setResult("Error");
+    }
   };
 
   return (
@@ -22,8 +28,14 @@ export default function ContactForm() {
       <input type="text" name="name" required/>
       <input type="email" name="email" required/>
       <textarea name="message" required></textarea>
-      <button type="submit">Submit</button>
-      <p>{result}</p>
+      <button type="submit">Submit Form</button>
+      <span>{result}</span>
     </form>
   );
 }
+
+ee599dac-abb0-44f2-8b99-c6dfb132ff64
+
+https://docs.web3forms.com/getting-started/customizations
+
+https://ui.aceternity.com/interactions/paper-plane-send

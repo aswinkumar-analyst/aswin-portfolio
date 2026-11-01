@@ -1,4 +1,5 @@
 import { ArrowDownIcon, ArrowUpRightIcon } from "../../components/ui/Icons";
+import GlassBg from "../../components/ui/GlassBg";
 import { FRAME_GUTTER } from "../../config/frame";
 
 // Headline, supporting line and CTAs. Every element the reveal animates
@@ -9,10 +10,25 @@ export default function HeroCopy({ copy }) {
     <div
       className={`absolute inset-x-0 top-0 z-20 pt-[clamp(8rem,22svh,13.5rem)] ${FRAME_GUTTER}`}
     >
-      <h1 className="text-[clamp(2.5rem,min(0.5rem+4.6vw,9svh),5.75rem)] leading-[0.98] font-semibold tracking-[-0.04em] text-balance text-on-sky">
+      <h1 className="text-[clamp(2.5rem,min(0.5rem+4.6vw,9svh),5.75rem)] leading-[0.98] font-heading font-normal text-balance text-on-sky">
+        <span className="sr-only">{copy.headline.map((line) => line.trim()).join(" ")}</span>
         {copy.headline.map((line) => (
-          <span key={line} data-hero="headline-line" className="block lg:whitespace-nowrap">
-            {line}
+          <span key={line} aria-hidden="true" className="block lg:whitespace-nowrap">
+            {line
+              .trim()
+              .split(" ")
+              .map((word, w) => (
+                <span key={w}>
+                  {/* Each word is the mask its letters rise out of. */}
+                  <span className="-mb-[0.1em] inline-block overflow-hidden pb-[0.1em] align-bottom">
+                    {[...word].map((ch, c) => (
+                      <span key={c} data-hero="char" className="inline-block">
+                        {ch}
+                      </span>
+                    ))}
+                  </span>{" "}
+                </span>
+              ))}
           </span>
         ))}
       </h1>
@@ -27,17 +43,18 @@ export default function HeroCopy({ copy }) {
       <div data-hero="ctas" className="mt-7 flex flex-wrap items-center gap-3 lg:mt-9">
         <a
           href={copy.primaryCta.href}
-          className="inline-flex h-10 items-center gap-2 rounded-full bg-cloud pr-4 pl-5 text-sm font-semibold tracking-[-0.01em] text-ink shadow-[0_4px_16px_rgb(2_30_50/0.18)] transition-[background-color,scale] duration-150 ease-ui hover:bg-white active:scale-[0.96] lg:h-11 lg:pr-5 lg:pl-6 lg:text-[0.9375rem]"
+          className="sheen relative inline-flex h-10 items-center gap-2 overflow-hidden rounded-full bg-cloud pr-4 pl-5 text-sm font-semibold tracking-[-0.01em] text-ink shadow-[0_4px_16px_rgb(2_30_50/0.18)] transition-[background-color,scale] duration-150 ease-ui hover:bg-white active:scale-[0.96] lg:h-11 lg:pr-5 lg:pl-6 lg:text-[0.9375rem]"
         >
           {copy.primaryCta.label}
           <ArrowDownIcon className="size-4 translate-y-px" strokeWidth={2} />
         </a>
         <a
           href={copy.secondaryCta.href}
-          className="inline-flex h-10 items-center gap-1.5 rounded-full border border-glass-border bg-glass px-4 text-sm font-semibold tracking-[-0.01em] text-on-sky backdrop-blur-md transition-[background-color,scale] duration-150 ease-ui hover:bg-white/25 active:scale-[0.96] lg:h-11 lg:px-5 lg:text-[0.9375rem]"
+          className="relative inline-flex h-10 items-center gap-1.5 rounded-full px-4 text-sm font-semibold tracking-[-0.01em] text-on-sky transition-[filter,scale] duration-150 ease-ui hover:brightness-125 active:scale-[0.96] lg:h-11 lg:px-5 lg:text-[0.9375rem]"
         >
-          {copy.secondaryCta.label}
-          <ArrowUpRightIcon className="size-4" strokeWidth={2} />
+          <GlassBg radius={22} backgroundOpacity={0.12} distortionScale={-90} />
+          <span className="relative">{copy.secondaryCta.label}</span>
+          <ArrowUpRightIcon className="relative size-4" strokeWidth={2} />
         </a>
       </div>
     </div>

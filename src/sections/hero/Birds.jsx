@@ -41,6 +41,7 @@ const vars = (b) => ({
 export default function Birds() {
   return (
     <div
+      data-hero="ambient"
       aria-hidden="true"
       className="pointer-events-none absolute inset-0 text-ink-deep/85"
     >

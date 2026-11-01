@@ -57,7 +57,7 @@ export default function ProjectCard({ project, index }) {
             onPointerMove={move}
             onPointerLeave={leave}
             aria-label={`${title}, ${client}. Opens case study in a new tab`}
-            className="group relative flex h-full flex-col overflow-hidden rounded-[1.75rem] bg-white/40 shadow-[0_10px_30px_-14px_rgb(8_31_54/0.22)] ring-1 ring-ink/8 backdrop-blur-lg transition-[translate,box-shadow,background-color] duration-500 ease-ui outline-sky hover:-translate-y-[5px] hover:bg-white/50 hover:shadow-[0_18px_36px_-16px_rgb(8_31_54/0.28)] focus-visible:-translate-y-[5px]"
+            className="glass group relative flex h-full flex-col overflow-hidden rounded-[1.75rem] transition-[translate,box-shadow,background-color] duration-500 ease-ui outline-sky hover:-translate-y-[5px] hover:bg-white/30 hover:shadow-[inset_0_1px_0_rgb(255_255_255/0.9),0_0_0_1px_rgb(15_104_166/0.2),0_22px_44px_-16px_rgb(8_31_54/0.3)] focus-visible:-translate-y-[5px]"
           >
             <div className="relative aspect-[5/4] overflow-hidden bg-ink-deep">
               <div data-art className="absolute inset-y-0 -inset-x-[8%] will-change-transform">
@@ -81,7 +81,7 @@ export default function ProjectCard({ project, index }) {
 
             <div className="flex flex-1 flex-col px-5 pt-5 pb-5">
               <p className="text-xs font-medium tracking-[0.14em] text-sky uppercase">{client}</p>
-              <h3 className="mt-2 text-2xl leading-tight font-semibold tracking-[-0.03em] text-balance text-ink">
+              <h3 className="mt-2 text-2xl leading-tight font-heading font-normal text-balance text-ink">
                 {title}
               </h3>
               <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-ink/65">{description}</p>

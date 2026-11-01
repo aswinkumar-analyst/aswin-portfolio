@@ -32,13 +32,18 @@ export default function HeroSection({ images = heroImages, copy = heroCopy }) {
       {/* Rounded frame and size container (the cqw/cqh units used by the birds
           and plane). bg-sky shows through if the image is slow to load. */}
       <div className="relative isolate h-full w-full overflow-hidden rounded-[1.75rem] bg-sky [container-type:size] sm:rounded-frame">
-        <img
-          {...images.sky}
-          alt=""
-          fetchPriority="high"
-          decoding="async"
-          className="absolute inset-0 size-full object-cover object-[62%_100%]"
-        />
+        <picture data-hero="sky">
+          {images.sources?.map((source) => (
+            <source key={source.srcSet} {...source} />
+          ))}
+          <img
+            {...images.sky}
+            alt=""
+            fetchPriority="high"
+            decoding="async"
+            className="absolute inset-0 size-full object-cover object-[62%_100%]"
+          />
+        </picture>
 
         <Birds />
         <HeroCopy copy={copy} />

@@ -2,6 +2,7 @@ import { useRef } from "react";
 import { aboutCopy, skillRows } from "../../config/about";
 import { FRAME_GUTTER } from "../../config/frame";
 import { useAboutScroll } from "../../hooks/useAboutScroll";
+import Eyebrow from "../../components/ui/Eyebrow";
 import SkillsMarquee from "./SkillsMarquee";
 
 /**
@@ -22,18 +23,17 @@ export default function AboutSection({ copy = aboutCopy, rows = skillRows }) {
       className="relative"
     >
       <div data-pin className={`relative ${FRAME_GUTTER} pt-24 pb-16 sm:pt-32 lg:pt-44 lg:pb-24`}>
-        <h2
-          id="about-title"
-          className="text-sm font-semibold tracking-[0.14em] text-sky uppercase"
-        >
+        <Eyebrow as="h2" id="about-title">
           {copy.eyebrow}
-        </h2>
+        </Eyebrow>
 
         <p
           data-statement
-          aria-label={copy.statement}
-          className="mt-6 max-w-[22ch] text-[clamp(1.75rem,0.9rem+3.6vw,4.25rem)] leading-[1.08] font-semibold tracking-[-0.035em] text-balance text-ink sm:mt-8 sm:max-w-[26ch] lg:max-w-[30ch]"
+          className="mt-6 max-w-[44ch] text-[clamp(1.75rem,0.9rem+3.6vw,4.25rem)] leading-[1.08] font-heading font-normal text-balance text-ink sm:mt-8"
         >
+          {/* A <p> can't take aria-label, so screen readers get this copy instead
+              of the per-character spans. */}
+          <span className="sr-only">{copy.statement}</span>
           {words.map((word, i) => (
             <span key={i} aria-hidden="true">
               {/* Word is the unbreakable unit (no mid-word wraps); the
@@ -51,6 +51,9 @@ export default function AboutSection({ copy = aboutCopy, rows = skillRows }) {
       </div>
 
       <div className="relative pb-20 sm:pb-28 lg:pb-36">
+        <div className={`mb-6 sm:mb-8 ${FRAME_GUTTER}`}>
+          <Eyebrow>Tech stack</Eyebrow>
+        </div>
         <SkillsMarquee rows={rows} />
       </div>
     </section>

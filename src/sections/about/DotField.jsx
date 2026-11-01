@@ -27,6 +27,7 @@ export default function DotField({ className = "" }) {
     let raf = 0;
     let visible = false;
     const ptr = { x: -9999, y: -9999, sx: -9999, sy: -9999 };
+    const near = []; // reused flat [x, y, r, alpha, ...] to avoid per-frame garbage
 
     const resize = () => {
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -42,34 +43,46 @@ export default function DotField({ className = "" }) {
       ctx.clearRect(0, 0, w, h);
       const cols = Math.ceil(w / SPACING) + 1;
       const rows = Math.ceil(h / SPACING) + 1;
+      // Resting dots share one path and fill; only dots near the pointer vary in
+      // alpha and need their own, so a frame is a handful of fills, not thousands.
+      ctx.fillStyle = `rgb(${INK} / ${BASE_ALPHA})`;
+      ctx.beginPath();
       for (let j = 0; j < rows; j++) {
         for (let i = 0; i < cols; i++) {
           const bx = i * SPACING;
           const by = j * SPACING;
           // Slow diagonal wave: a gentle size and position ripple.
           const wave = Math.sin(bx * 0.012 + by * 0.009 + t * 0.0008);
-          let x = bx + wave * 3;
-          let y = by + wave * 3;
-          let r = BASE_R + wave * 0.35;
-          let a = BASE_ALPHA;
+          const x = bx + wave * 3;
+          const y = by + wave * 3;
+          const r = BASE_R + wave * 0.35;
 
           const dx = bx - ptr.sx;
           const dy = by - ptr.sy;
           const d = Math.hypot(dx, dy);
           if (d < REACH) {
             const f = (1 - d / REACH) ** 2;
-            x += (dx / (d || 1)) * PUSH * f;
-            y += (dy / (d || 1)) * PUSH * f;
-            r += SWELL * f;
-            a += 0.3 * f;
+            near.push(
+              x + (dx / (d || 1)) * PUSH * f,
+              y + (dy / (d || 1)) * PUSH * f,
+              r + SWELL * f,
+              BASE_ALPHA + 0.3 * f,
+            );
+          } else {
+            ctx.moveTo(x + r, y);
+            ctx.arc(x, y, r, 0, 6.2832);
           }
-
-          ctx.fillStyle = `rgb(${INK} / ${a})`;
-          ctx.beginPath();
-          ctx.arc(x, y, r, 0, 6.2832);
-          ctx.fill();
         }
       }
+      ctx.fill();
+
+      for (let i = 0; i < near.length; i += 4) {
+        ctx.fillStyle = `rgb(${INK} / ${near[i + 3]})`;
+        ctx.beginPath();
+        ctx.arc(near[i], near[i + 1], near[i + 2], 0, 6.2832);
+        ctx.fill();
+      }
+      near.length = 0;
     };
 
     const loop = (t) => {

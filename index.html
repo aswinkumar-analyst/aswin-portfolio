@@ -3,10 +3,86 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Aswin Portfolio</title>
+    <title>Aswin | Gen AI &amp; Automation Engineer</title>
+    <meta
+      name="description"
+      content="Aswin is a Gen AI and automation engineer who designs and ships agents, retrieval systems and automations, from first prototype to production."
+    />
+    <meta name="theme-color" content="#0f68a6" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="canonical" href="%SITE_URL%/" />
+
+    <!-- Link previews. These tags must stay in this file: LinkedIn and X don't run JavaScript. -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="%SITE_URL%/" />
+    <meta property="og:title" content="Aswin | Gen AI &amp; Automation Engineer" />
+    <meta property="og:description" content="Building intelligent systems for the future: agents, retrieval systems and automations." />
+    <meta property="og:image" content="%SITE_URL%/og.jpg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Gen AI and Automation Engineer, set on a blue sky above halftone clouds." />
+    <meta name="twitter:card" content="summary_large_image" />
+
+    <!-- The hero sky is the LCP image. React renders it only after the bundle runs,
+         so fetch it now. Keep these lists in step with src/config/heroAssets.js. -->
+    <link
+      rel="preload"
+      as="image"
+      type="image/avif"
+      media="(max-aspect-ratio: 1/1)"
+      imagesrcset="/src/assets/hero/sky-square-1000.avif 1000w, /src/assets/hero/sky-square-1500.avif 1500w"
+      imagesizes="100svh"
+      fetchpriority="high"
+    />
+    <link
+      rel="preload"
+      as="image"
+      type="image/avif"
+      media="(min-aspect-ratio: 1001/1000)"
+      imagesrcset="/src/assets/hero/sky-1280.avif 1280w, /src/assets/hero/sky-2560.avif 2560w, /src/assets/hero/sky-3200.avif 3200w, /src/assets/hero/sky-4280.avif 4280w"
+      imagesizes="max(100vw, 285vh)"
+      fetchpriority="high"
+    />
+
+    <!-- Boot screen styles live here so they paint before the stylesheet arrives. -->
+    <style>
+      #loader {
+        position: fixed;
+        inset: 0;
+        z-index: 100;
+        background: #081f36;
+        touch-action: none;
+      }
+      #loader canvas {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+      }
+      #loader a {
+        position: absolute;
+        bottom: 32px;
+        left: 50%;
+        translate: -50% 0;
+        color: #f8f7f3;
+        font: 14px ui-sans-serif, system-ui, sans-serif;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        #loader {
+          display: none;
+        }
+      }
+    </style>
+    <noscript><style>#loader { display: none; }</style></noscript>
   </head>
   <body>
+    <div id="loader" role="status" aria-label="Loading">
+      <canvas aria-hidden="true"></canvas>
+      <a href="" hidden>Reload</a>
+    </div>
     <div id="root"></div>
+    <script src="/loader.js"></script>
+    <noscript>Aswin, Gen AI &amp; Automation Engineer. This site needs JavaScript to display.</noscript>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

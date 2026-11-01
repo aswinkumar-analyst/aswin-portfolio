@@ -19,6 +19,12 @@ export function useSmoothScroll() {
       anchors: { duration: 2 },
     });
 
+    // Hold the page still behind the boot screen (see public/loader.js).
+    if (window.__boot) {
+      lenis.stop();
+      window.__boot.ready.then(() => lenis.start());
+    }
+
     lenis.on("scroll", ScrollTrigger.update);
     const tick = (time) => lenis.raf(time * 1000);
     gsap.ticker.add(tick);

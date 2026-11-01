@@ -50,6 +50,15 @@ export function ArrowUpRightIcon(props) {
   );
 }
 
+export function CopyIcon(props) {
+  return (
+    <Icon {...props}>
+      <rect x="9" y="9" width="11" height="11" rx="2.5" />
+      <path d="M5.5 15H5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h9a1 1 0 0 1 1 1v.5" />
+    </Icon>
+  );
+}
+
 export function MenuIcon(props) {
   return (
     <Icon {...props}>

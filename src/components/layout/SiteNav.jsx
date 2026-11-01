@@ -93,7 +93,7 @@ export default function SiteNav() {
         aria-label="Primary"
         className={`relative mx-auto flex items-center justify-between rounded-2xl border transition-[width,height,padding,background-color,border-color,box-shadow,backdrop-filter] duration-500 ease-ui motion-reduce:transition-none ${
           scrolled
-            ? "h-14 w-[95%] border-white/50 bg-white/45 px-3 pl-5 text-ink shadow-[0_10px_34px_rgb(2_30_50/0.14),inset_0_1px_0_rgb(255_255_255/0.7)] backdrop-blur-2xl backdrop-brightness-110 backdrop-saturate-150 sm:px-4 sm:pl-6 lg:h-16 lg:px-4 lg:pl-7"
+            ? "h-14 w-[95%] border-white/70 bg-white/60 px-3 pl-5 text-ink shadow-[0_10px_34px_rgb(2_30_50/0.16),0_0_0_1px_rgb(8_31_54/0.05),inset_0_1px_0_rgb(255_255_255/0.9)] backdrop-blur-xl backdrop-brightness-110 backdrop-saturate-150 sm:px-4 sm:pl-6 lg:h-16 lg:px-4 lg:pl-7"
             : "h-18 w-full border-transparent bg-transparent px-5 text-on-sky shadow-[0_0_0_rgb(2_30_50/0)] backdrop-blur-0 sm:px-8 lg:h-24 lg:px-[7.5%]"
         }`}
       >
@@ -111,7 +111,7 @@ export default function SiteNav() {
           onBlur={placeActive}
           className="absolute left-1/2 hidden -translate-x-1/2 items-center lg:flex"
         >
-          <span
+          <li
             aria-hidden="true"
             style={{ translate: `${indicator.x}px 0`, width: indicator.w }}
             className={`pointer-events-none absolute inset-y-0 left-0 my-auto h-9 rounded-xl transition-[translate,width,opacity,background-color] duration-300 ease-ui motion-reduce:transition-none ${
@@ -137,7 +137,7 @@ export default function SiteNav() {
         <div className="flex items-center gap-1.5">
           <a
             href={navCta.href}
-            className={`group/cta inline-flex h-10 items-center gap-1.5 rounded-xl border px-4.5 text-sm font-semibold tracking-[-0.01em] transition-[background-color,border-color,color,scale] duration-200 ease-ui active:scale-[0.96] ${focusRing} ${
+            className={`sheen group/cta relative inline-flex h-10 items-center gap-1.5 overflow-hidden rounded-xl border px-4.5 text-sm font-semibold tracking-[-0.01em] transition-[background-color,border-color,color,scale] duration-200 ease-ui active:scale-[0.96] ${focusRing} ${
               scrolled
                 ? "border-sky bg-sky text-on-sky hover:border-sky-deep hover:bg-sky-deep"
                 : "border-glass-border bg-glass text-on-sky shadow-[inset_0_1px_0_rgb(255_255_255/0.25)] backdrop-blur-md hover:bg-white/25"
