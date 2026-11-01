@@ -1,0 +1,210 @@
+/*
+ * Hero ambient motion: the bird flock and the towed sky banner.
+ *
+ * Everything here animates transform and opacity only, so it runs on the
+ * compositor. The hero frame is a size container, so cqw/cqh are the frame's
+ * own width/height and the flights scale with it.
+ */
+
+@layer components {
+  /*
+   * Birds. Three nested loops:
+   *   .bird      diagonal glide, fading in and out so the loop never pops
+   *   __bob      sine-like vertical drift with a slight bank
+   *   .wing      flap: rotate about the wing root plus a little squash
+   */
+  .bird {
+    --k: 1;
+    position: absolute;
+    width: calc(var(--size) * var(--k));
+    will-change: transform, opacity;
+    animation: bird-fly var(--dur) linear var(--delay) infinite;
+  }
+  .bird__bob {
+    will-change: transform;
+    animation: bird-bob var(--bob-dur) ease-in-out var(--bob-delay) infinite alternate;
+  }
+  .wing {
+    transform-origin: 20px 9px;
+    animation: bird-flap var(--flap) ease-in-out var(--flap-delay) infinite alternate;
+  }
+  .wing--l {
+    --s: 1;
+  }
+  .wing--r {
+    --s: -1;
+  }
+
+  /*
+   * Sky banner. A Cessna tows a paper flag from right to left, then rests off
+   * screen before the next pass. The plane faces left, so the flag trails right.
+   *   .sky-banner        the pass across the frame
+   *   __inner            gentle bob and bank
+   *   __flag             flutter (rotate/skew) plus a rippling shade
+   */
+  .sky-banner {
+    position: absolute;
+    top: clamp(6.5rem, 17cqh, 11rem);
+    left: 0;
+    z-index: 25;
+    width: max-content;
+    pointer-events: none;
+    will-change: transform;
+    animation: sky-banner-fly 32s linear 0.8s infinite backwards;
+  }
+  .sky-banner__inner {
+    display: flex;
+    align-items: center;
+    filter: drop-shadow(0 5px 8px rgb(12 28 44 / 0.22));
+    will-change: transform;
+    animation: sky-banner-bob 3.6s ease-in-out infinite alternate;
+  }
+  .sky-banner__plane {
+    width: 44px;
+    height: auto;
+  }
+  .sky-banner__rope {
+    width: 22px;
+    height: 1.5px;
+    background: rgb(255 255 255 / 0.9);
+  }
+  .sky-banner__flag {
+    position: relative;
+    overflow: hidden;
+    padding: 8px 12px;
+    background: #fff;
+    color: var(--color-ink);
+    font-size: 11px;
+    line-height: 14px;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    white-space: nowrap;
+    transform-origin: 0 50%;
+    clip-path: polygon(0 6%, 3% 0, 12% 5%, 22% 0, 34% 6%, 47% 1%, 60% 6%, 73% 1%, 86% 6%, 96% 1%, 100% 7%, 100% 93%, 96% 100%, 86% 94%, 73% 99%, 60% 94%, 47% 99%, 34% 94%, 22% 100%, 12% 95%, 3% 100%, 0 94%);
+    animation: sky-banner-drag 4.2s ease-in-out -1.05s infinite;
+  }
+  .sky-banner__flag::before {
+    content: "";
+    position: absolute;
+    inset: -30% -80% -30% -20%;
+    z-index: -1;
+    background: repeating-linear-gradient(102deg, #18283a00, #18283a0d 8px, #18283a29 15px, #18283a33 18px, #18283a12 24px, #18283a00 34px);
+    animation: sky-banner-ripple 1.6s linear infinite;
+  }
+
+  @media (min-width: 640px) {
+    .sky-banner__plane {
+      width: 56px;
+    }
+    .sky-banner__rope {
+      width: 34px;
+    }
+  }
+
+  @media (min-width: 768px) {
+    .sky-banner__flag {
+      padding: 8px 16px;
+      font-size: 12px;
+      line-height: 16px;
+      clip-path: polygon(0 3%, 12% 0, 25% 4%, 38% 1%, 50% 5%, 63% 2%, 76% 6%, 88% 3%, 100% 7%, 100% 93%, 88% 97%, 76% 94%, 63% 98%, 50% 95%, 38% 99%, 25% 96%, 12% 100%, 0 97%);
+    }
+  }
+
+  @media (max-width: 639.98px) {
+    .bird {
+      --k: 0.7;
+    }
+  }
+
+  /* Reduced motion: birds stop (three stay), the banner rests in the sky. */
+  @media (prefers-reduced-motion: reduce) {
+    .bird,
+    .bird__bob,
+    .wing,
+    .sky-banner,
+    .sky-banner__inner,
+    .sky-banner__flag,
+    .sky-banner__flag::before {
+      animation: none;
+    }
+    .bird:nth-child(n + 4) {
+      display: none;
+    }
+    .sky-banner {
+      left: auto;
+      right: 6%;
+    }
+  }
+}
+
+@keyframes bird-fly {
+  0% {
+    transform: translate3d(0, 0, 0);
+    opacity: 0;
+  }
+  8% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate3d(var(--dx), var(--dy), 0);
+    opacity: 0;
+  }
+}
+
+@keyframes bird-bob {
+  from {
+    transform: translate3d(0, calc(var(--bob) * -1), 0) rotate(-3deg);
+  }
+  to {
+    transform: translate3d(0, var(--bob), 0) rotate(3deg);
+  }
+}
+
+@keyframes bird-flap {
+  from {
+    transform: rotate(calc(var(--s) * 24deg)) scaleY(0.85);
+  }
+  to {
+    transform: rotate(calc(var(--s) * -20deg)) scaleY(1);
+  }
+}
+
+/* Enters off the right edge, crosses in 80% of the loop, rests off the left. */
+@keyframes sky-banner-fly {
+  0% {
+    transform: translate3d(100cqw, 0, 0);
+  }
+  80%,
+  100% {
+    transform: translate3d(calc(-100% - 1rem), 0, 0);
+  }
+}
+
+@keyframes sky-banner-bob {
+  from {
+    transform: translate3d(0, -6px, 0) rotate(-1deg);
+  }
+  to {
+    transform: translate3d(0, 6px, 0) rotate(1deg);
+  }
+}
+
+@keyframes sky-banner-drag {
+  0%,
+  100% {
+    transform: rotate(1.4deg) skewY(1.1deg);
+  }
+  50% {
+    transform: rotate(-1.4deg) skewY(-1.1deg);
+  }
+}
+
+/* 34px is the period of the flag's repeating gradient, so the loop is seamless. */
+@keyframes sky-banner-ripple {
+  to {
+    transform: translate3d(34px, 0, 0);
+  }
+}

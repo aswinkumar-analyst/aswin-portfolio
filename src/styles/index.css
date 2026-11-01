@@ -1,0 +1,68 @@
+@import "@fontsource-variable/geist";
+@import "tailwindcss";
+@import "./hero.css";
+@import "./about.css";
+
+/*
+ * Design tokens ("Aero Blue Telephony", see designs/Main DESIGN.md).
+ * Every colour used in components comes from here as a Tailwind utility:
+ * bg-sky, text-ink, bg-cloud, border-glass-border, ...
+ */
+@theme {
+  --font-sans: "Geist Variable", ui-sans-serif, system-ui, sans-serif;
+
+  --color-paper: #f4f2ec;        /* page canvas around the hero card */
+  --color-sky: #0f68a6;          /* matches the sampled sky art */
+  --color-sky-deep: #024b75;     /* hover / pressed on sky */
+  --color-ink: #1c1c1e;          /* text on cream surfaces */
+  --color-ink-deep: #081f36;     /* birds */
+  --color-cloud: #f8f7f3;        /* cream pills, cards */
+  --color-on-sky: #ffffff;
+  --color-on-sky-muted: #d6e8f7; /* secondary copy on sky: tinted, not grey */
+  --color-glass: rgb(255 255 255 / 0.14);
+  --color-glass-border: rgb(255 255 255 / 0.35);
+
+  --radius-frame: 2.5rem;
+
+  --ease-ui: cubic-bezier(0.2, 0, 0, 1);
+}
+
+@layer base {
+  html {
+    background-color: var(--color-paper);
+    color: var(--color-ink);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    scroll-padding-top: 6rem; /* clears the fixed nav on anchor jumps */
+    scrollbar-width: thin;
+    scrollbar-color: color-mix(in oklab, var(--color-sky) 45%, transparent) transparent;
+  }
+
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background-color: color-mix(in oklab, var(--color-sky) 45%, transparent);
+    border-radius: 999px;
+  }
+
+  body {
+    margin: 0;
+    background-color: var(--color-paper);
+    font-family: var(--font-sans);
+  }
+
+  ::selection {
+    background-color: var(--color-sky);
+    color: var(--color-on-sky);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-cloud);
+    outline-offset: 3px;
+  }
+}
