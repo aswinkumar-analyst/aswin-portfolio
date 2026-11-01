@@ -50,7 +50,7 @@ export function useAboutScroll(scope) {
           start: "top 8%",
           // Small phones: the statement wraps to many lines, so a full
           // screen of scroll feels long. Pin for less than half of that.
-          end: small ? "+=65%" : "+=160%",
+          end: small ? "+=55%" : "+=160%",
           pin: true,
         });
 
