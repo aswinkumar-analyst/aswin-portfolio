@@ -17,7 +17,15 @@ export function useAboutScroll(scope) {
       const hero = document.querySelector(HERO);
       const mm = gsap.matchMedia();
 
-      mm.add("(prefers-reduced-motion: no-preference)", () => {
+      mm.add(
+        {
+          motion: "(prefers-reduced-motion: no-preference)",
+          small: "(max-width: 480px)",
+        },
+        (ctx) => {
+        const { motion, small } = ctx.conditions;
+        if (!motion) return;
+
         if (hero) {
           gsap.to(hero, {
             scale: 0.9,
@@ -40,7 +48,9 @@ export function useAboutScroll(scope) {
         const pin = ScrollTrigger.create({
           trigger: pinTrigger,
           start: "top 8%",
-          end: "+=160%",
+          // Small phones: the statement wraps to many lines, so a full
+          // screen of scroll feels long. Pin for less than half of that.
+          end: small ? "+=65%" : "+=160%",
           pin: true,
         });
 
@@ -60,13 +70,14 @@ export function useAboutScroll(scope) {
               trigger: pinTrigger,
               // Starts once the block is 40% into the viewport (before it
               // pins) and finishes exactly when the pin releases.
-              start: "top 60%",
+              start: small ? "top 75%" : "top 60%",
               end: () => pin.end,
-              scrub: 1.2,
+              scrub: small ? 0.6 : 1.2,
             },
           },
         );
-      });
+        },
+      );
 
       return () => mm.revert();
     },
