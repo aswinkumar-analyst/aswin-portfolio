@@ -49,7 +49,7 @@ export default function WorkSection({ copy = workCopy, projects = defaultProject
       ref={root}
       id="work"
       aria-labelledby="work-title"
-      className="relative overflow-x-clip bg-paper py-24 sm:py-32 lg:py-44"
+      className="relative pt-4 pb-24 sm:pb-32 lg:pb-44"
     >
       <div className={`flex flex-col gap-12 lg:flex-row lg:items-start lg:gap-16 ${GUTTER_L}`}>
         <div className="pr-5 sm:pr-8 lg:sticky lg:top-32 lg:w-[min(26rem,34%)] lg:flex-none lg:pr-0">
@@ -107,7 +107,7 @@ export default function WorkSection({ copy = workCopy, projects = defaultProject
             aria-roledescription="carousel"
             aria-label="Selected projects"
             tabIndex={0}
-            className="cursor-grab touch-pan-y overflow-hidden py-8 -my-8 outline-sky select-none data-[dragging]:cursor-grabbing"
+            className="cursor-grab touch-pan-y overflow-x-clip outline-sky select-none data-[dragging]:cursor-grabbing"
           >
             <ul className="flex gap-4 sm:gap-5">
               {projects.map((project, i) => (

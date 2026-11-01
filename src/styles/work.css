@@ -1,0 +1,28 @@
+/* Work cards: a glowing 1px edge that follows the pointer (--mx / --my are set
+   per card by ProjectCard). Only the ring is painted, via a border-box mask. */
+.card-edge {
+  position: absolute;
+  inset: 0;
+  padding: 1px;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  background: radial-gradient(
+    240px circle at var(--mx, 50%) var(--my, 50%),
+    rgb(15 104 166 / 0.5),
+    transparent 65%
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#000 0 0) content-box exclude,
+    linear-gradient(#000 0 0);
+  transition: opacity 0.5s var(--ease-ui);
+}
+
+.group:hover > .card-edge,
+.group:focus-visible > .card-edge {
+  opacity: 1;
+}

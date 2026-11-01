@@ -2,12 +2,11 @@ import { useRef } from "react";
 import { aboutCopy, skillRows } from "../../config/about";
 import { FRAME_GUTTER } from "../../config/frame";
 import { useAboutScroll } from "../../hooks/useAboutScroll";
-import DotField from "./DotField";
 import SkillsMarquee from "./SkillsMarquee";
 
 /**
- * About: slides up over the pinned hero as a rounded cream card (see
- * useAboutScroll). Stack, back to front: dot field -> copy -> marquee.
+ * About: slides up over the pinned hero (see useAboutScroll). The rounded cream
+ * card and dot field behind it live in App, shared with the Work section.
  */
 export default function AboutSection({ copy = aboutCopy, rows = skillRows }) {
   const root = useRef(null);
@@ -20,14 +19,8 @@ export default function AboutSection({ copy = aboutCopy, rows = skillRows }) {
       ref={root}
       id="about"
       aria-labelledby="about-title"
-      className="relative z-10 isolate overflow-clip rounded-t-[1.75rem] bg-cloud shadow-[0_-24px_60px_rgb(8_31_54/0.14)] sm:rounded-t-frame"
+      className="relative"
     >
-      {/* Sticky viewport-sized layer: the dots stay put while the card scrolls
-          past, instead of travelling up with the content. */}
-      <div className="pointer-events-none sticky top-0 mb-[-100svh] h-svh">
-        <DotField />
-      </div>
-
       <div data-pin className={`relative ${FRAME_GUTTER} pt-24 pb-16 sm:pt-32 lg:pt-44 lg:pb-24`}>
         <h2
           id="about-title"
