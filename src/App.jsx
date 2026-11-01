@@ -1,3 +1,4 @@
+import { Analytics } from "@vercel/analytics/react";
 import { useSmoothScroll } from "./hooks/useSmoothScroll";
 import SiteNav from "./components/layout/SiteNav";
 import AboutSection from "./sections/about/AboutSection";
@@ -24,6 +25,7 @@ export default function App() {
           <WorkSection />
         </div>
       </main>
+      <Analytics />
     </>
   );
 }
