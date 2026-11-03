@@ -1,0 +1,379 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI HR Assistant — Project Case Study</title>
+<meta name="description" content="A LangGraph-powered HR assistant that combines RAG over an employee handbook with deterministic policy tools.">
+<style>
+:root{
+  --bg:#fafaf7; --surface:#ffffff; --ink:#1b1f1d; --muted:#5d6661; --line:#e4e6e1;
+  --accent:#e8710a; --accent2:#1f8a5b; --accent-soft:#fdeedd; --green-soft:#e3f4eb;
+  --code-bg:#f2f3ee; --shadow:0 1px 2px rgba(0,0,0,.04),0 8px 24px rgba(0,0,0,.05);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#121512; --surface:#1a1e1b; --ink:#ecefe9; --muted:#9aa49d; --line:#2a302c;
+    --accent:#ff9a3d; --accent2:#4cc38a; --accent-soft:#2c2013; --green-soft:#14271d;
+    --code-bg:#222823; --shadow:none;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#121512; --surface:#1a1e1b; --ink:#ecefe9; --muted:#9aa49d; --line:#2a302c;
+  --accent:#ff9a3d; --accent2:#4cc38a; --accent-soft:#2c2013; --green-soft:#14271d;
+  --code-bg:#222823; --shadow:none;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:72px}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.65 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline}
+.wrap{max-width:980px;margin:0 auto;padding:0 20px}
+nav.top{position:sticky;top:0;z-index:10;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+nav.top .wrap{display:flex;gap:6px;overflow-x:auto;padding-top:10px;padding-bottom:10px;scrollbar-width:none}
+nav.top a{white-space:nowrap;font-size:13px;color:var(--muted);padding:5px 10px;border-radius:999px}
+nav.top a:hover{background:var(--accent-soft);color:var(--accent);text-decoration:none}
+header.hero{padding:72px 0 40px}
+.eyebrow{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);font-weight:700}
+h1{font-size:clamp(34px,6vw,56px);line-height:1.08;margin:12px 0 16px;letter-spacing:-.02em}
+.lede{font-size:19px;color:var(--muted);max-width:680px;margin:0 0 28px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:32px}
+.chip{font-size:13px;padding:5px 12px;border-radius:999px;background:var(--surface);border:1px solid var(--line);color:var(--muted)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px 18px;box-shadow:var(--shadow)}
+.stat b{display:block;font-size:30px;line-height:1.1;color:var(--accent)}
+.stat span{font-size:13px;color:var(--muted)}
+section{padding:44px 0;border-top:1px solid var(--line)}
+section h2{font-size:28px;margin:0 0 6px;letter-spacing:-.01em}
+section h2 .n{color:var(--accent);font-variant-numeric:tabular-nums;margin-right:10px;font-size:15px;font-weight:700;vertical-align:middle}
+h3{font-size:17px;margin:26px 0 6px}
+p{margin:10px 0}
+.muted{color:var(--muted)}
+.grid{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));margin-top:18px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px 20px;box-shadow:var(--shadow)}
+.card h4{margin:0 0 6px;font-size:16px}
+.card p{margin:0;color:var(--muted);font-size:15px}
+.card .tag{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--accent2);background:var(--green-soft);padding:2px 8px;border-radius:6px;margin-bottom:8px}
+.callout{border-left:4px solid var(--accent);background:var(--accent-soft);padding:14px 18px;border-radius:0 12px 12px 0;margin:20px 0}
+.callout.green{border-color:var(--accent2);background:var(--green-soft)}
+code,pre{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:13.5px}
+code{background:var(--code-bg);padding:2px 6px;border-radius:5px}
+pre{background:var(--code-bg);padding:16px 18px;border-radius:12px;overflow-x:auto;border:1px solid var(--line);line-height:1.55}
+pre code{background:none;padding:0}
+table{width:100%;border-collapse:collapse;font-size:14.5px;margin-top:14px;background:var(--surface);border-radius:12px;overflow:hidden;border:1px solid var(--line)}
+th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top}
+th{background:var(--code-bg);font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+tr:last-child td{border-bottom:0}
+.table-scroll{overflow-x:auto}
+.pill{display:inline-block;font-size:12px;font-weight:600;padding:2px 9px;border-radius:999px}
+.pill.no{background:#fde3e1;color:#a4281d}.pill.ok{background:var(--green-soft);color:var(--accent2)}.pill.na{background:#fff2cc;color:#8a6200}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .pill.no{background:#3a1a17;color:#ff8f84}:root:not([data-theme="light"]) .pill.na{background:#3a2e0e;color:#ffcf5c}}
+.diagram{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px;margin:18px 0;overflow-x:auto;box-shadow:var(--shadow)}
+.diagram svg{min-width:640px;width:100%;height:auto;display:block}
+.diagram .box{fill:var(--surface);stroke:var(--ink);stroke-width:1.4}
+.diagram .box.llm{fill:var(--accent-soft);stroke:var(--accent)}
+.diagram .box.det{fill:var(--green-soft);stroke:var(--accent2)}
+.diagram .end{fill:var(--code-bg);stroke:var(--muted)}
+.diagram text{fill:var(--ink);font:600 13px system-ui,sans-serif;text-anchor:middle}
+.diagram text.sub{font-weight:400;font-size:11px;fill:var(--muted)}
+.diagram text.lbl{font-weight:500;font-size:11px;fill:var(--muted)}
+.diagram path{fill:none;stroke:var(--muted);stroke-width:1.5}
+.diagram path.dash{stroke:var(--accent);stroke-dasharray:5 4}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:13px;color:var(--muted);margin-top:8px}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:-1px;border:1.5px solid}
+ol.steps{padding-left:0;list-style:none;counter-reset:s;margin:16px 0}
+ol.steps li{counter-increment:s;position:relative;padding:0 0 14px 44px}
+ol.steps li::before{content:counter(s);position:absolute;left:0;top:0;width:30px;height:30px;border-radius:50%;background:var(--accent);color:#fff;font-weight:700;font-size:14px;display:grid;place-items:center}
+ul.clean{padding-left:20px}
+ul.clean li{margin:6px 0}
+.links{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));margin-top:16px}
+.links a{display:block;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px 18px;color:var(--ink);box-shadow:var(--shadow)}
+.links a:hover{border-color:var(--accent);text-decoration:none}
+.links a b{display:block;color:var(--accent)}
+.links a span{font-size:13px;color:var(--muted)}
+.todo{background:#fff8d6;color:#6b5400;padding:1px 6px;border-radius:4px;font-size:.92em}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .todo{background:#3a2e0e;color:#ffcf5c}}
+footer{padding:36px 0 60px;color:var(--muted);font-size:14px;border-top:1px solid var(--line)}
+</style>
+</head>
+<body>
+
+<nav class="top"><div class="wrap">
+  <a href="#intro">Introduction</a><a href="#problem">Problem</a><a href="#solution">Solution</a>
+  <a href="#architecture">Architecture</a><a href="#technical">Technical</a><a href="#features">Features</a>
+  <a href="#stack">Stack</a><a href="#challenges">Challenges</a><a href="#testing">Testing</a>
+  <a href="#results">Results</a><a href="#future">Future</a><a href="#resources">Resources</a>
+</div></nav>
+
+<header class="hero"><div class="wrap">
+  <div class="eyebrow">Project case study</div>
+  <h1>AI HR Assistant</h1>
+  <p class="lede">An agentic assistant that answers employee questions from the company handbook, and hands every calculation and eligibility check to deterministic code instead of trusting the language model.</p>
+  <div class="chips">
+    <span class="chip">LangGraph</span><span class="chip">RAG</span><span class="chip">Tool calling</span>
+    <span class="chip">Groq · gpt-oss-120b</span><span class="chip">LangSmith</span><span class="chip">Python</span>
+  </div>
+  <div class="stats">
+    <div class="stat"><b>3</b><span>routed question types</span></div>
+    <div class="stat"><b>7</b><span>deterministic HR tools</span></div>
+    <div class="stat"><b>6</b><span>graph nodes</span></div>
+    <div class="stat"><b>57</b><span>handbook pages indexed</span></div>
+  </div>
+</div></header>
+
+<main class="wrap">
+
+<section id="intro">
+  <h2><span class="n">01</span>Introduction</h2>
+  <p>The AI HR Assistant is a conversational agent built around a realistic company scenario: <strong>Lashmi Exim</strong> and its 57-page Employee Handbook covering leave, probation, payroll, travel and reimbursements. Employees can ask questions in plain English and get answers that cite the relevant handbook chapter.</p>
+  <p>The interesting part is not that it chats. It is that it knows <em>when not to let the LLM answer</em>. Policy explanations come from retrieved handbook text. Anything that involves arithmetic, dates or a yes/no eligibility decision runs through plain Python functions that encode the handbook's rules.</p>
+  <div class="grid">
+    <div class="card"><h4>My role</h4><p>System design, graph orchestration, RAG pipeline, tool logic, prompt design and observability setup.</p></div>
+    <div class="card"><h4>Type</h4><p>Company project · internal HR assistant, built to run as a CLI app and in LangGraph Studio.</p></div>
+    <div class="card"><h4>Focus</h4><p>Reliable, auditable AI behavior for a domain where a wrong answer has real consequences.</p></div>
+  </div>
+</section>
+
+<section id="problem">
+  <h2><span class="n">02</span>Problem Statement</h2>
+  <p>HR teams answer the same questions repeatedly: <em>How many casual leaves can I take in a row? When does my probation end? Is my reimbursement claim still valid?</em> The answers exist in the handbook, but employees rarely read 57 pages, and HR spends time on lookups instead of people.</p>
+  <h3>Why a plain chatbot is not enough</h3>
+  <ul class="clean">
+    <li><strong>LLMs are unreliable at rules and math.</strong> "1.5 days per month for 7 months" or "90 days from 1 January" are exactly the kind of thing a model will occasionally get wrong, with total confidence.</li>
+    <li><strong>Hallucinated policy is worse than no answer.</strong> An invented rule about notice periods or claim windows can mislead an employee into a bad decision.</li>
+    <li><strong>Questions are not all the same shape.</strong> "What is the CL policy?" needs retrieval. "Can I take 4 days of CL?" needs a decision. "What's the weather?" needs a polite refusal. One prompt cannot serve all three well.</li>
+    <li><strong>Handbooks have gaps.</strong> A good assistant should say "the handbook doesn't define this" instead of guessing.</li>
+  </ul>
+</section>
+
+<section id="solution">
+  <h2><span class="n">03</span>Proposed Solution</h2>
+  <p>A <strong>router-first, hybrid architecture</strong> built as a LangGraph state machine. Every question is classified first, then sent down the path best suited to it.</p>
+  <div class="grid">
+    <div class="card"><span class="tag">policy_question</span><h4>Retrieve, then answer</h4><p>For "what is the rule" questions. Relevant handbook chunks are retrieved and the model answers using <em>only</em> that context.</p></div>
+    <div class="card"><span class="tag">hr_action</span><h4>Call tools, never guess</h4><p>For calculations and eligibility checks. The agent must call one of seven deterministic tools and base its answer on the result.</p></div>
+    <div class="card"><span class="tag">out_of_scope</span><h4>Refuse cleanly</h4><p>Anything unrelated gets a fixed message. No LLM call is made, so there is nothing to jailbreak and no tokens spent.</p></div>
+  </div>
+  <div class="callout">
+    <strong>Key design idea:</strong> when a validation tool <em>rejects</em> a request, the graph detours through retrieval to fetch the handbook rule behind the rejection, then asks the model to explain <em>why</em>, and what the employee can do instead. The decision is deterministic; the explanation is grounded in the real policy text.
+  </div>
+</section>
+
+<section id="architecture">
+  <h2><span class="n">04</span>System Architecture</h2>
+  <p>The graph has six nodes and three conditional branch points. Solid lines are the normal flow; the dashed orange path is the rejection-explanation detour.</p>
+  <div class="diagram">
+  <svg viewBox="0 0 760 400" role="img" aria-label="LangGraph flow: router sends questions to retrieval, the HR agent with tools, or an out-of-scope reply">
+    <defs><marker id="a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="currentColor" style="fill:var(--muted);stroke:none"/></marker>
+    <marker id="b" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" style="fill:var(--accent);stroke:none"/></marker></defs>
+
+    <rect class="box llm" x="300" y="20" width="160" height="44" rx="10"/><text x="380" y="40">router</text><text class="sub" x="380" y="55">structured-output LLM</text>
+
+    <path d="M300 42H110V138" marker-end="url(#a)"/><text class="lbl" x="205" y="36">policy_question</text>
+    <path d="M380 64V138" marker-end="url(#a)"/><text class="lbl" x="412" y="106">hr_action</text>
+    <path d="M460 42H650V138" marker-end="url(#a)"/><text class="lbl" x="560" y="36">out_of_scope</text>
+
+    <rect class="box det" x="30" y="140" width="160" height="44" rx="10"/><text x="110" y="160">retrieve_policy</text><text class="sub" x="110" y="175">vector search · k=4</text>
+    <rect class="box llm" x="30" y="260" width="160" height="44" rx="10"/><text x="110" y="280">policy_answer</text><text class="sub" x="110" y="295">grounded LLM answer</text>
+    <path d="M110 184V258" marker-end="url(#a)"/>
+    <path d="M110 304V343" marker-end="url(#a)"/>
+    <rect class="end" x="80" y="345" width="60" height="28" rx="14"/><text x="110" y="364">END</text>
+
+    <rect class="box llm" x="300" y="140" width="160" height="44" rx="10"/><text x="380" y="160">hr_agent</text><text class="sub" x="380" y="175">LLM + bound tools</text>
+    <rect class="box det" x="300" y="260" width="160" height="44" rx="10"/><text x="380" y="280">tools</text><text class="sub" x="380" y="295">7 deterministic functions</text>
+    <path d="M355 184V258" marker-end="url(#a)"/><text class="lbl" x="318" y="226" style="text-anchor:end">tool call</text>
+    <path d="M405 260V186" marker-end="url(#a)"/><text class="lbl" x="414" y="226" style="text-anchor:start">result</text>
+    <path d="M460 162H500V228" marker-end="url(#a)"/><text class="lbl" x="530" y="188">final answer</text>
+    <rect class="end" x="470" y="230" width="60" height="28" rx="14"/><text x="500" y="249">END</text>
+
+    <path class="dash" d="M300 290H245V172H194" marker-end="url(#b)"/><text class="lbl" x="272" y="318" style="fill:var(--accent)">valid = false</text>
+    <path class="dash" d="M194 152H296" marker-end="url(#b)"/><text class="lbl" x="245" y="146" style="fill:var(--accent)">explain why</text>
+
+    <rect class="box" x="570" y="140" width="160" height="44" rx="10"/><text x="650" y="160">out_of_scope</text><text class="sub" x="650" y="175">fixed reply · no LLM</text>
+    <path d="M650 184V228" marker-end="url(#a)"/>
+    <rect class="end" x="620" y="230" width="60" height="28" rx="14"/><text x="650" y="249">END</text>
+  </svg>
+  </div>
+  <div class="legend">
+    <span><i style="background:var(--accent-soft);border-color:var(--accent)"></i>LLM step</span>
+    <span><i style="background:var(--green-soft);border-color:var(--accent2)"></i>Deterministic step</span>
+  </div>
+
+  <h3>Request lifecycle</h3>
+  <ol class="steps">
+    <li><strong>Route.</strong> The router LLM returns a validated <code>RouteDecision</code> (route + one-line reason) via structured output, and per-question state is reset.</li>
+    <li><strong>Branch.</strong> A conditional edge sends the question to retrieval, the tool-using agent, or the out-of-scope reply.</li>
+    <li><strong>Act.</strong> Policy questions get a grounded answer. Action questions loop between <code>hr_agent</code> and <code>tools</code> until the model has what it needs.</li>
+    <li><strong>Explain rejections.</strong> If any tool returns <code>valid: false</code>, the graph fetches the relevant handbook section once and the agent writes the explanation with tool-calling disabled.</li>
+    <li><strong>Trace.</strong> Each run is tagged and traced in LangSmith with a session id and model metadata.</li>
+  </ol>
+</section>
+
+<section id="technical">
+  <h2><span class="n">05</span>Technical Breakdown</h2>
+
+  <h3>Shared graph state</h3>
+  <p>One small typed state travels through every node. <code>messages</code> uses LangGraph's <code>add_messages</code> reducer so the conversation accumulates; the other keys control routing.</p>
+<pre><code>class HRState(TypedDict, total=False):
+    messages: Annotated[list[AnyMessage], add_messages]
+    route: Route                # "policy_question" | "hr_action" | "out_of_scope"
+    policy_context: str         # retrieved handbook text
+    rejection_explained: bool   # guards against looping the detour</code></pre>
+
+  <h3>RAG pipeline</h3>
+  <p>The handbook PDF is loaded with <code>PyPDFLoader</code>, split with <code>RecursiveCharacterTextSplitter</code> (1,000 characters, 150 overlap), embedded locally with <code>all-MiniLM-L6-v2</code> sentence-transformers, and held in an in-memory vector store. The retriever returns the top 4 chunks. It is built once at startup and reused by every request.</p>
+
+  <h3>Conditional routing</h3>
+  <p>Three small functions in <code>edges.py</code> make every branching decision: which path a question takes, whether a tool result was a rejection, and where the shared retrieval node should send control next. Keeping them separate from the nodes makes the flow readable from the graph definition alone.</p>
+<pre><code>def after_hr_tools(state):
+    # Did a validation tool reject the request since the last AI message?
+    ...
+    if rejected and not state.get("rejection_explained"):
+        return "explain_rejection"   # detour via retrieve_policy
+    return "hr_agent"</code></pre>
+
+  <h3>One node, two callers</h3>
+  <p><code>retrieve_policy</code> is reached from two places. From the router it searches with the user's question. After a rejection it appends the tool's rejection reason to the query, so the search targets <em>the rule that caused the rejection</em> rather than the original wording.</p>
+</section>
+
+<section id="features">
+  <h2><span class="n">06</span>Core Features</h2>
+  <div class="grid">
+    <div class="card"><span class="tag">Routing</span><h4>Intent-aware paths</h4><p>The prompt teaches the router the difference between asking for a rule and asking about a specific request, with side-by-side examples.</p></div>
+    <div class="card"><span class="tag">Grounding</span><h4>Handbook-only answers</h4><p>The policy prompt forbids invented rules and requires the model to say so when the context does not contain the answer.</p></div>
+    <div class="card"><span class="tag">Accuracy</span><h4>Deterministic calculations</h4><p>Leave accrual, probation end dates, payroll deadlines and allowances are computed by code, never from model memory.</p></div>
+    <div class="card"><span class="tag">Validation</span><h4>Rule-based eligibility</h4><p>Leave and reimbursement requests are checked against notice periods, probation status, day limits and document requirements.</p></div>
+    <div class="card"><span class="tag">Explainability</span><h4>Cited rejections</h4><p>Every tool result carries a <code>policy_reference</code> such as "Chapter 7.2", and rejections are explained using the retrieved handbook text.</p></div>
+    <div class="card"><span class="tag">Honesty</span><h4>Admits policy gaps</h4><p>If the handbook is silent, the tool returns an "undefined" result and tells the user to confirm with HR instead of guessing.</p></div>
+    <div class="card"><span class="tag">Safety</span><h4>Scoped refusals</h4><p>Off-topic questions get a fixed reply without ever reaching the model.</p></div>
+    <div class="card"><span class="tag">Observability</span><h4>LangSmith tracing</h4><p>Named runs, tags and session metadata make every conversation inspectable step by step.</p></div>
+  </div>
+
+  <h3>The seven HR tools</h3>
+  <div class="table-scroll"><table>
+    <tr><th>Tool</th><th>What it does</th><th>Handbook</th></tr>
+    <tr><td><code>validate_leave_request</code></td><td>Checks EL/CL/SL requests against probation status, notice period and consecutive-day limits</td><td>Ch. 7</td></tr>
+    <tr><td><code>calculate_earned_leave_accrual</code></td><td>Earned leave at 1.5 days per completed month</td><td>Ch. 7.2</td></tr>
+    <tr><td><code>calculate_probation_end</code></td><td>90 calendar days from joining date</td><td>Ch. 4.5</td></tr>
+    <tr><td><code>check_payroll_deadline</code></td><td>Cut-off, salary credit and payslip dates for any given date</td><td>Ch. 8.1</td></tr>
+    <tr><td><code>validate_reimbursement_claim</code></td><td>Checks claim window, approvals, bill documentation and settlement timeline</td><td>Ch. 17.4</td></tr>
+    <tr><td><code>calculate_remote_work_allowance</code></td><td>Internet allowance by work model (hybrid / remote-first)</td><td>Ch. 18.3</td></tr>
+    <tr><td><code>calculate_travel_daily_allowance</code></td><td>Daily allowance by grade (1–5) and location type</td><td>Ch. 17.3</td></tr>
+  </table></div>
+</section>
+
+<section id="stack">
+  <h2><span class="n">07</span>Technology Stack</h2>
+  <div class="table-scroll"><table>
+    <tr><th>Layer</th><th>Technology</th><th>Why</th></tr>
+    <tr><td>Orchestration</td><td>LangGraph (<code>StateGraph</code>, <code>ToolNode</code>)</td><td>Explicit, inspectable control flow with conditional edges and loops</td></tr>
+    <tr><td>LLM</td><td><code>openai/gpt-oss-120b</code> on Groq, temperature 0</td><td>Fast inference; zero temperature for consistent, factual answers</td></tr>
+    <tr><td>Embeddings</td><td>sentence-transformers <code>all-MiniLM-L6-v2</code></td><td>Runs locally, no embedding API cost, good enough for a single handbook</td></tr>
+    <tr><td>Vector store</td><td>LangChain <code>InMemoryVectorStore</code></td><td>Zero infrastructure for a ~57-page corpus</td></tr>
+    <tr><td>Document handling</td><td>PyPDF, <code>RecursiveCharacterTextSplitter</code></td><td>Loads the PDF and keeps paragraph structure when chunking</td></tr>
+    <tr><td>Structured output</td><td>Pydantic</td><td>Forces the router to return a valid route</td></tr>
+    <tr><td>Observability</td><td>LangSmith, LangGraph Studio</td><td>Trace every node and debug the graph visually</td></tr>
+    <tr><td>Tooling</td><td>Python 3.11+, <code>uv</code>, python-dotenv</td><td>Fast, reproducible environments</td></tr>
+  </table></div>
+</section>
+
+<section id="challenges">
+  <h2><span class="n">08</span>Engineering Challenges</h2>
+
+  <div class="card" style="margin-top:16px"><h4>1. Telling "the rule" apart from "my request"</h4>
+  <p><strong>Problem:</strong> "How many consecutive CL days are allowed?" and "Can I take 4 days of casual leave in a row?" look almost identical but need different handling.<br>
+  <strong>Solution:</strong> A router prompt built around a <em>key distinction</em> with paired examples, plus structured output so the model cannot return anything but one of three routes.</p></div>
+
+  <div class="card" style="margin-top:14px"><h4>2. Explaining a rejection without looping forever</h4>
+  <p><strong>Problem:</strong> A rejected request should be explained with real policy text, but an agent that can call tools may keep retrying them.<br>
+  <strong>Solution:</strong> A <code>rejection_explained</code> flag in state allows the detour exactly once. On the second visit the agent is bound with <code>tool_choice="none"</code>, so it can only write the answer.</p></div>
+
+  <div class="card" style="margin-top:14px"><h4>3. Retrieving the right rule after a rejection</h4>
+  <p><strong>Problem:</strong> The original question ("Can I take 5 days of EL?") is a poor search query for finding the probation rule.<br>
+  <strong>Solution:</strong> The retrieval node concatenates the question with the tool's rejection reason before searching, so the query contains the language of the rule itself.</p></div>
+
+  <div class="card" style="margin-top:14px"><h4>4. Gaps and ambiguity in the policy</h4>
+  <p><strong>Problem:</strong> The handbook says to claim within 15 days and that claims over 45 days need Finance Head approval, but says nothing about days 16–45.<br>
+  <strong>Solution:</strong> The tool returns <code>valid: None</code> with an explicit "not defined, confirm with HR/Finance" message. It does not invent a rule, and the router logic treats "undefined" differently from "rejected".</p></div>
+
+  <div class="card" style="margin-top:14px"><h4>5. Stale state between questions</h4>
+  <p><strong>Problem:</strong> Retrieved context and flags from a previous question could leak into the next one.<br>
+  <strong>Solution:</strong> The router resets <code>policy_context</code> and <code>rejection_explained</code> on every new question.</p></div>
+</section>
+
+<section id="testing">
+  <h2><span class="n">09</span>Testing &amp; Evaluation</h2>
+  <p>The deterministic tools make this system unusually testable: for a given input, the correct outcome is known exactly. The scenarios below cover each route and each tool, with the expected result derived from the handbook rules encoded in the code.</p>
+  <div class="table-scroll"><table>
+    <tr><th>Question</th><th>Route</th><th>Expected behavior</th></tr>
+    <tr><td>What is the casual leave policy?</td><td>policy_question</td><td>Answer from retrieved handbook text, cited</td></tr>
+    <tr><td>How much EL will I accrue after 6 months?</td><td>hr_action</td><td><span class="pill ok">9 days</span> (6 × 1.5)</td></tr>
+    <tr><td>When does my probation end if I joined 2026-01-01?</td><td>hr_action</td><td><span class="pill ok">2026-04-01</span> (+90 days)</td></tr>
+    <tr><td>Can I take 5 days of EL during probation?</td><td>hr_action</td><td><span class="pill no">Rejected</span> then explained via Ch. 4.5 / 7.2</td></tr>
+    <tr><td>Can I take 4 days of casual leave in a row?</td><td>hr_action</td><td><span class="pill no">Rejected</span> (CL limit is 3 consecutive days)</td></tr>
+    <tr><td>Travel allowance for Grade 3 in a metro?</td><td>hr_action</td><td><span class="pill ok">INR 1,600</span> per day</td></tr>
+    <tr><td>Calculate my remote-first allowance</td><td>hr_action</td><td><span class="pill ok">INR 2,500</span> per month</td></tr>
+    <tr><td>Can I claim reimbursement 20 days after returning?</td><td>hr_action</td><td><span class="pill na">Undefined</span> by handbook; defer to HR/Finance</td></tr>
+    <tr><td>What's the weather in Chennai?</td><td>out_of_scope</td><td>Fixed refusal, no LLM call</td></tr>
+  </table></div>
+
+  <h3>How I evaluated it</h3>
+  <ul class="clean">
+    <li><strong>Tool correctness:</strong> boundary checks on every rule (exactly 3 vs 4 CL days, 7 vs 21 days of notice, 15 vs 16 vs 45 vs 46 days for claims).</li>
+    <li><strong>Routing accuracy:</strong> question pairs that differ only in "rule vs request" intent.</li>
+    <li><strong>Grounding:</strong> checking policy answers against the source chapters and confirming the model declines when the context lacks the answer.</li>
+    <li><strong>Trace review:</strong> inspecting runs in tracing to confirm the expected node sequence, especially the rejection detour.</li>
+  </ul>
+  <div class="callout green">Add your own measured numbers here once you run a test set, e.g. <span class="todo">routing accuracy: __ / __ questions</span> and <span class="todo">tool-call correctness: __ / __</span>. Real numbers are more convincing than adjectives.</div>
+</section>
+
+<section id="results">
+  <h2><span class="n">10</span>Results &amp; Learnings</h2>
+  <h3>What the project delivers</h3>
+  <ul class="clean">
+    <li>An assistant that returns <strong>exact, repeatable answers</strong> for calculations and eligibility checks, because the logic lives in code.</li>
+    <li>Policy answers <strong>grounded in the handbook</strong>, with chapter references on tool results.</li>
+    <li>A <strong>fully inspectable</strong> flow: every question is traceable from router decision to final message.</li>
+    <li>A design that is cheap to run: local embeddings, a fast hosted model, and no LLM call at all for refusals.</li>
+  </ul>
+  <h3>What I learned</h3>
+  <ul class="clean">
+    <li><strong>Use the LLM for language, not logic.</strong> The most reliable way to get correct numbers is to never ask the model to produce them.</li>
+    <li><strong>Routing is a product decision.</strong> Splitting question types up front simplified every downstream prompt.</li>
+    <li><strong>Explicit state beats clever prompts.</strong> A single boolean flag solved a loop problem that prompt wording could not guarantee.</li>
+    <li><strong>"I don't know" is a feature.</strong> Modeling an undefined outcome separately from valid/invalid keeps the assistant trustworthy.</li>
+    <li><strong>Observability pays for itself.</strong> LangSmith traces turned debugging from guesswork into reading a timeline.</li>
+  </ul>
+</section>
+
+<section id="future">
+  <h2><span class="n">11</span>Future Improvements</h2>
+  <div class="grid">
+    <div class="card"><h4>Web or chat UI</h4><p>Wrap the graph in a FastAPI backend with a Streamlit or React front end, or a Slack / Teams bot.</p></div>
+    <div class="card"><h4>Conversation memory</h4><p>Add a LangGraph checkpointer so follow-ups like "what about 6 days?" keep their context.</p></div>
+    <div class="card"><h4>Personalized answers</h4><p>Connect to employee records (joining date, grade, leave balance) so the assistant stops asking for inputs it could look up.</p></div>
+    <div class="card"><h4>Better retrieval</h4><p>Add a persistent vector DB, hybrid keyword + semantic search, reranking, and page / chapter citations in answers.</p></div>
+    <div class="card"><h4>Automated evaluation</h4><p>Build a LangSmith dataset and run regression evals on routing, tool selection and answer faithfulness for every change.</p></div>
+    <div class="card"><h4>Access control &amp; escalation</h4><p>Role-based access, audit logs, and a hand-off to a human HR contact when the handbook has no answer.</p></div>
+  </div>
+</section>
+
+<section id="resources">
+  <h2><span class="n">12</span>Project Resources</h2>
+  <div class="callout">
+    <strong>Confidential company project.</strong> This was built for an organization, so the source code, live demo and LangSmith traces are not public. The company's internal policies and employee data stay private.
+  </div>
+  <p>What I can share instead:</p>
+  <div class="grid">
+    <div class="card"><h4>Architecture walkthrough</h4><p>The system design, graph flow and design decisions on this page are available to discuss in detail.</p></div>
+    <div class="card"><h4>Technical discussion</h4><p>Happy to walk through the routing logic, tool design and RAG pipeline in an interview or call.</p></div>
+    <div class="card"><h4>Reproducible approach</h4><p>The same pattern (router, RAG, deterministic tools, rejection explanations) can be rebuilt on a non-confidential sample handbook on request.</p></div>
+  </div>
+  <p class="muted" style="margin-top:18px">Contact: <span class="todo">add your email or LinkedIn link</span></p>
+</section>
+
+</main>
+
+<footer><div class="wrap">Built with LangGraph, LangChain and Groq · Case study by Aswin · Confidential company project: details shared at a high level only</div></footer>
+</body>
+</html>

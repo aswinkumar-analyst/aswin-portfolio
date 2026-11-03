@@ -19,6 +19,12 @@ export default function App() {
         Skip to content
       </a>
       <SiteNav />
+      {/* Covers the content (not the nav) during a nav-link cut. See lib/scroll. */}
+      <div
+        id="page-veil"
+        aria-hidden="true"
+        className="pointer-events-none fixed inset-0 z-40 bg-cloud opacity-0"
+      />
       <main className="w-full max-w-full overflow-x-clip">
         <HeroSection />
         {/* About, Work and Contact share one cream card and one dot field, so there is no

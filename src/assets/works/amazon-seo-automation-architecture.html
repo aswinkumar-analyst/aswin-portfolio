@@ -1,0 +1,446 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Amazon SEO Automation — System Architecture</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0a0d14;
+    --bg-2:#0f1420;
+    --panel:#121a29;
+    --panel-2:#16203200;
+    --line:#22304a;
+    --text:#e8edf6;
+    --muted:#8d9bb5;
+    --faint:#5b6984;
+    --pw:#34d399;       /* Playwright */
+    --pw-soft:rgba(52,211,153,.10);
+    --ai:#f59e6b;       /* Claude */
+    --ai-soft:rgba(245,158,107,.12);
+    --amz:#fbbf24;      /* Amazon */
+    --amz-soft:rgba(251,191,36,.08);
+    --core:#7aa2ff;     /* Orchestration */
+    --core-soft:rgba(122,162,255,.10);
+    --radius:18px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+    background:
+      radial-gradient(1000px 500px at 85% -10%, rgba(122,162,255,.12), transparent 60%),
+      radial-gradient(800px 400px at -10% 20%, rgba(245,158,107,.08), transparent 60%),
+      var(--bg);
+    color:var(--text);
+    line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1160px;margin:0 auto;padding:0 24px}
+  @media (max-width:600px){.wrap{padding:0 16px}}
+
+  /* ---------- Header ---------- */
+  header{padding:72px 0 40px}
+  .eyebrow{
+    display:inline-flex;gap:10px;align-items:center;flex-wrap:wrap;
+    font:500 12px/1 "JetBrains Mono",monospace;letter-spacing:.12em;text-transform:uppercase;
+    color:var(--muted);
+  }
+  .eyebrow span{padding:7px 11px;border:1px solid var(--line);border-radius:999px;background:rgba(255,255,255,.02)}
+  h1{
+    margin:22px 0 14px;
+    font-size:clamp(32px,5vw,56px);line-height:1.05;letter-spacing:-.03em;font-weight:800;
+  }
+  h1 .grad{background:linear-gradient(90deg,var(--ai),var(--amz) 50%,var(--pw));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .lede{max-width:720px;color:var(--muted);font-size:clamp(16px,1.6vw,18px)}
+
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:36px}
+  .stat{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px 20px}
+  .stat b{display:block;font-size:24px;letter-spacing:-.02em}
+  .stat small{color:var(--muted);font-size:13px}
+  @media (max-width:760px){.stats{grid-template-columns:repeat(2,1fr)}}
+
+  /* ---------- Sections ---------- */
+  section{padding:40px 0}
+  .sec-head{display:flex;justify-content:space-between;align-items:end;gap:16px;flex-wrap:wrap;margin-bottom:20px}
+  h2{font-size:clamp(22px,2.6vw,30px);letter-spacing:-.02em}
+  .sec-head p{color:var(--muted);font-size:15px;max-width:560px}
+  .kicker{font:500 12px/1 "JetBrains Mono",monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);margin-bottom:10px}
+
+  /* ---------- Diagram ---------- */
+  .diagram-card{
+    background:linear-gradient(180deg,rgba(255,255,255,.025),rgba(255,255,255,.01));
+    border:1px solid var(--line);border-radius:var(--radius);
+    padding:20px;position:relative;
+  }
+  .toolbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+  .legend{display:flex;gap:16px;flex-wrap:wrap;font-size:13px;color:var(--muted)}
+  .legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:7px;vertical-align:-1px}
+  .btn{
+    font:600 13px Inter,sans-serif;color:var(--text);cursor:pointer;
+    background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:10px;padding:9px 14px;
+    transition:background .2s,border-color .2s;
+  }
+  .btn:hover{background:rgba(255,255,255,.08);border-color:#344563}
+  .scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .scroll svg{display:block;width:100%;min-width:760px;height:auto}
+  .hint{display:none;font-size:12px;color:var(--faint);margin-top:8px}
+  @media (max-width:800px){.hint{display:block}}
+
+  /* SVG styles */
+  .zone{fill:none;stroke:var(--line);stroke-width:1.2;stroke-dasharray:4 6}
+  .zone-label{font:600 11px "JetBrains Mono",monospace;letter-spacing:.14em;fill:var(--faint);text-transform:uppercase}
+  .node rect.box{stroke-width:1.4;rx:14}
+  .n-core rect.box{fill:#111a2c;stroke:var(--core)}
+  .n-pw   rect.box{fill:#0f1d1a;stroke:var(--pw)}
+  .n-ai   rect.box{fill:#21160f;stroke:var(--ai)}
+  .n-amz  rect.box{fill:#1d1809;stroke:var(--amz)}
+  .n-title{font:700 15px Inter,sans-serif;fill:var(--text)}
+  .n-sub{font:400 12px Inter,sans-serif;fill:var(--muted)}
+  .n-tag{font:500 10px "JetBrains Mono",monospace;letter-spacing:.1em}
+  .n-core .n-tag{fill:var(--core)} .n-pw .n-tag{fill:var(--pw)} .n-ai .n-tag{fill:var(--ai)} .n-amz .n-tag{fill:var(--amz)}
+  .field rect{fill:rgba(251,191,36,.06);stroke:rgba(251,191,36,.35)}
+  .field text{font:500 12px Inter,sans-serif;fill:var(--text)}
+  .edge{fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+  .flow{stroke-dasharray:6 7;animation:dash 1.4s linear infinite}
+  @keyframes dash{to{stroke-dashoffset:-26}}
+  @media (prefers-reduced-motion:reduce){.flow{animation:none}}
+  .e-core{stroke:var(--core)} .e-pw{stroke:var(--pw)} .e-ai{stroke:var(--ai)} .e-amz{stroke:var(--amz)} .e-muted{stroke:#4b5a78}
+  .e-label{font:500 11.5px Inter,sans-serif;fill:var(--muted)}
+  .e-step{font:700 11px "JetBrains Mono",monospace;fill:var(--bg)}
+  .pill{rx:9}
+
+  /* ---------- Steps ---------- */
+  .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+  @media (max-width:900px){.steps{grid-template-columns:repeat(2,1fr)}}
+  @media (max-width:560px){.steps{grid-template-columns:1fr}}
+  .step{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px;position:relative;overflow:hidden}
+  .step::before{content:"";position:absolute;inset:0 auto 0 0;width:3px;background:var(--c,var(--core))}
+  .step .num{font:600 12px "JetBrains Mono",monospace;color:var(--c,var(--core));letter-spacing:.1em}
+  .step h3{font-size:16px;margin:6px 0 6px}
+  .step p{font-size:14px;color:var(--muted)}
+
+  /* ---------- Components ---------- */
+  .comps{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+  @media (max-width:900px){.comps{grid-template-columns:repeat(2,1fr)}}
+  @media (max-width:520px){.comps{grid-template-columns:1fr}}
+  .comp{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:22px}
+  .comp .badge{display:inline-block;font:500 11px "JetBrains Mono",monospace;letter-spacing:.1em;text-transform:uppercase;padding:6px 10px;border-radius:8px;margin-bottom:14px}
+  .comp h3{font-size:17px;margin-bottom:6px}
+  .comp p{font-size:14px;color:var(--muted)}
+  .comp ul{margin-top:12px;padding-left:18px;font-size:13.5px;color:var(--muted)}
+  .comp li{margin:3px 0}
+
+  /* ---------- Impact ---------- */
+  .impact{display:grid;grid-template-columns:1.1fr 1fr;gap:14px}
+  @media (max-width:820px){.impact{grid-template-columns:1fr}}
+  .big{background:linear-gradient(135deg,rgba(52,211,153,.10),rgba(122,162,255,.08));border:1px solid var(--line);border-radius:var(--radius);padding:28px;display:grid;grid-template-columns:1fr 1fr;gap:20px}
+  .big b{display:block;font-size:clamp(34px,4.5vw,48px);letter-spacing:-.03em;line-height:1}
+  .big small{color:var(--muted);font-size:14px}
+  .list{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:24px}
+  .list li{list-style:none;padding:10px 0 10px 28px;position:relative;border-bottom:1px solid var(--line);font-size:15px}
+  .list li:last-child{border-bottom:none}
+  .list li::before{content:"";position:absolute;left:4px;top:18px;width:9px;height:9px;border-radius:50%;background:var(--pw);box-shadow:0 0 0 4px rgba(52,211,153,.15)}
+  .note{margin-top:14px;font-size:13px;color:var(--faint);border-left:2px solid var(--line);padding-left:14px}
+
+  footer{padding:40px 0 64px;color:var(--faint);font-size:13px;border-top:1px solid var(--line);margin-top:30px}
+  footer .wrap{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+
+  @media print{
+    body{background:#0a0d14;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    .btn,.hint{display:none}
+    .flow{animation:none}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <div class="eyebrow"><span>AI Engineering</span><span>Browser Automation</span><span>E-Commerce SEO</span></div>
+    <h1>AI-Powered Amazon <span class="grad">SEO Automation</span></h1>
+    <p class="lede">System architecture of an end-to-end pipeline that reads each Amazon listing, rewrites its title, description, and bullet points with Claude, and publishes the optimized content back to Seller Central with Playwright, across 700+ products.</p>
+
+    <div class="stats">
+      <div class="stat"><b>700+</b><small>Listings optimized</small></div>
+      <div class="stat"><b>3</b><small>Content fields per listing</small></div>
+      <div class="stat"><b>Claude</b><small>Content generation</small></div>
+      <div class="stat"><b>Playwright</b><small>Browser automation</small></div>
+    </div>
+  </div>
+</header>
+
+<!-- ================= ARCHITECTURE ================= -->
+<section id="architecture">
+  <div class="wrap">
+    <div class="sec-head">
+      <div>
+        <div class="kicker">01 · System Architecture</div>
+        <h2>How the pipeline fits together</h2>
+      </div>
+      <p>An orchestrator works through the catalogue one listing at a time. Playwright handles every interaction with Seller Central, and Claude handles content generation.</p>
+    </div>
+
+    <div class="diagram-card">
+      <div class="toolbar">
+        <div class="legend">
+          <span><i style="background:var(--core)"></i>Orchestration</span>
+          <span><i style="background:var(--pw)"></i>Playwright</span>
+          <span><i style="background:var(--ai)"></i>Claude (AI)</span>
+          <span><i style="background:var(--amz)"></i>Amazon Seller Central</span>
+        </div>
+        <button class="btn" id="dl">↓ Download diagram (SVG)</button>
+      </div>
+
+      <div class="scroll">
+<svg id="arch" viewBox="0 0 1000 570" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Architecture: Product catalogue feeds an orchestrator, which drives Playwright to extract listing content from Seller Central, sends it to Claude for SEO optimization, then uses Playwright to publish the update back to Seller Central and loops to the next listing.">
+  <defs>
+    <marker id="a-core" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#7aa2ff"/></marker>
+    <marker id="a-pw" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#34d399"/></marker>
+    <marker id="a-ai" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#f59e6b"/></marker>
+    <marker id="a-amz" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#fbbf24"/></marker>
+    <marker id="a-muted" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#4b5a78"/></marker>
+  </defs>
+
+  <!-- Zones -->
+  <rect class="zone" x="20" y="20" width="250" height="530" rx="20"/>
+  <text class="zone-label" x="40" y="46">Control layer</text>
+
+  <rect class="zone" x="330" y="20" width="300" height="530" rx="20"/>
+  <text class="zone-label" x="350" y="46">Automation + AI layer</text>
+
+  <rect class="zone" x="690" y="20" width="290" height="530" rx="20" style="stroke:rgba(251,191,36,.35)"/>
+  <text class="zone-label" x="710" y="46" style="fill:#b48a1c">Amazon Seller Central</text>
+
+  <!-- Catalogue -->
+  <g class="node n-core">
+    <rect class="box" x="45" y="70" width="200" height="100"/>
+    <text class="n-tag" x="63" y="95">INPUT</text>
+    <text class="n-title" x="63" y="120">Product Catalogue</text>
+    <text class="n-sub" x="63" y="142">700+ listings queued</text>
+    <text class="n-sub" x="63" y="158">for optimization</text>
+  </g>
+
+  <!-- Orchestrator -->
+  <g class="node n-core">
+    <rect class="box" x="45" y="240" width="200" height="100"/>
+    <text class="n-tag" x="63" y="265">ORCHESTRATOR</text>
+    <text class="n-title" x="63" y="290">Automation Workflow</text>
+    <text class="n-sub" x="63" y="312">Iterates listing-by-listing</text>
+    <text class="n-sub" x="63" y="328">and coordinates each step</text>
+  </g>
+
+  <!-- Extract (Playwright) -->
+  <g class="node n-pw">
+    <rect class="box" x="360" y="70" width="240" height="100"/>
+    <text class="n-tag" x="378" y="95">PLAYWRIGHT · READ</text>
+    <text class="n-title" x="378" y="120">Access Listing</text>
+    <text class="n-sub" x="378" y="142">Opens the listing editor and</text>
+    <text class="n-sub" x="378" y="158">captures the current content</text>
+  </g>
+
+  <!-- Claude -->
+  <g class="node n-ai">
+    <rect class="box" x="360" y="240" width="240" height="100"/>
+    <text class="n-tag" x="378" y="265">CLAUDE · AI ENHANCEMENT</text>
+    <text class="n-title" x="378" y="290">SEO Content Generation</text>
+    <text class="n-sub" x="378" y="312">Rewrites title, description &amp;</text>
+    <text class="n-sub" x="378" y="328">bullets: clear, search-friendly</text>
+  </g>
+
+  <!-- Publish (Playwright) -->
+  <g class="node n-pw">
+    <rect class="box" x="360" y="410" width="240" height="100"/>
+    <text class="n-tag" x="378" y="435">PLAYWRIGHT · WRITE</text>
+    <text class="n-title" x="378" y="460">Publish Update</text>
+    <text class="n-sub" x="378" y="482">Fills the optimized fields and</text>
+    <text class="n-sub" x="378" y="498">submits the listing change</text>
+  </g>
+
+  <!-- Seller Central listing -->
+  <g class="node n-amz">
+    <rect class="box" x="715" y="70" width="240" height="440"/>
+    <text class="n-tag" x="735" y="98">MARKETPLACE</text>
+    <text class="n-title" x="735" y="123">Product Listing</text>
+    <text class="n-sub" x="735" y="144">Managed in Seller Central</text>
+
+    <g class="field"><rect x="735" y="175" width="200" height="56" rx="10"/>
+      <text x="751" y="199">Product Title</text>
+      <text x="751" y="218" style="fill:var(--muted);font-weight:400;font-size:11px">Keyword-rich, readable</text></g>
+    <g class="field"><rect x="735" y="245" width="200" height="56" rx="10"/>
+      <text x="751" y="269">Product Description</text>
+      <text x="751" y="288" style="fill:var(--muted);font-weight:400;font-size:11px">Informative, consistent tone</text></g>
+    <g class="field"><rect x="735" y="315" width="200" height="56" rx="10"/>
+      <text x="751" y="339">Bullet Points</text>
+      <text x="751" y="358" style="fill:var(--muted);font-weight:400;font-size:11px">Key features, scannable</text></g>
+
+    <text class="n-sub" x="735" y="410">Same structure applied to</text>
+    <text class="n-sub" x="735" y="426">every listing in the catalogue</text>
+    <text class="n-title" x="735" y="480" style="font-size:22px;fill:var(--amz)">700+</text>
+    <text class="n-sub" x="800" y="480">listings updated</text>
+  </g>
+
+  <!-- ====== Edges ====== -->
+  <!-- Catalogue -> Orchestrator -->
+  <path class="edge flow e-core" d="M145,170 V236" marker-end="url(#a-core)"/>
+  <text class="e-label" x="155" y="208">listing queue</text>
+
+  <!-- Orchestrator -> Extract -->
+  <path class="edge flow e-core" d="M245,270 H300 V120 H356" marker-end="url(#a-core)"/>
+  <rect class="pill" x="285" y="182" width="30" height="20" fill="#7aa2ff"/><text class="e-step" x="292" y="196">01</text>
+
+  <!-- Extract <-> Seller Central -->
+  <path class="edge flow e-pw" d="M600,105 H711" marker-end="url(#a-pw)"/>
+  <text class="e-label" x="612" y="96">open listing</text>
+  <path class="edge flow e-amz" d="M715,140 H604" marker-end="url(#a-amz)"/>
+  <text class="e-label" x="612" y="160">current content</text>
+  <rect class="pill" x="640" y="114" width="30" height="20" fill="#34d399"/><text class="e-step" x="647" y="128">02</text>
+
+  <!-- Extract -> Claude -->
+  <path class="edge flow e-pw" d="M480,170 V236" marker-end="url(#a-pw)"/>
+  <text class="e-label" x="490" y="200">original copy</text>
+  <rect class="pill" x="440" y="193" width="30" height="20" fill="#34d399"/><text class="e-step" x="447" y="207">03</text>
+
+  <!-- Claude -> Publish -->
+  <path class="edge flow e-ai" d="M480,340 V406" marker-end="url(#a-ai)"/>
+  <text class="e-label" x="490" y="370">optimized copy</text>
+  <rect class="pill" x="440" y="363" width="30" height="20" fill="#f59e6b"/><text class="e-step" x="447" y="377">04</text>
+
+  <!-- Publish -> Seller Central -->
+  <path class="edge flow e-pw" d="M600,460 H711" marker-end="url(#a-pw)"/>
+  <text class="e-label" x="612" y="450">submit update</text>
+  <rect class="pill" x="640" y="470" width="30" height="20" fill="#34d399"/><text class="e-step" x="647" y="484">05</text>
+
+  <!-- Loop: Publish -> Orchestrator -->
+  <path class="edge flow e-muted" d="M360,480 H145 V344" marker-end="url(#a-muted)"/>
+  <text class="e-label" x="160" y="470">next listing (repeat ×700+)</text>
+  <rect class="pill" x="130" y="400" width="30" height="20" fill="#8d9bb5"/><text class="e-step" x="137" y="414">06</text>
+</svg>
+      </div>
+      <div class="hint">← Scroll sideways to see the full diagram →</div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= LIFECYCLE ================= -->
+<section id="lifecycle">
+  <div class="wrap">
+    <div class="sec-head">
+      <div>
+        <div class="kicker">02 · Execution Flow</div>
+        <h2>One listing, end to end</h2>
+      </div>
+      <p>Each listing goes through the same six steps. The loop then picks up the next product until the catalogue is done.</p>
+    </div>
+
+    <div class="steps">
+      <div class="step" style="--c:var(--core)"><div class="num">STEP 01</div><h3>Queue the listing</h3><p>The orchestrator takes the next product from the catalogue and starts the workflow for it.</p></div>
+      <div class="step" style="--c:var(--pw)"><div class="num">STEP 02</div><h3>Access the listing</h3><p>Playwright opens the product's listing in Seller Central and reads its current title, description, and bullet points.</p></div>
+      <div class="step" style="--c:var(--pw)"><div class="num">STEP 03</div><h3>Send to Claude</h3><p>The existing content goes to Claude as the starting point for optimization.</p></div>
+      <div class="step" style="--c:var(--ai)"><div class="num">STEP 04</div><h3>Generate SEO content</h3><p>Claude returns rewritten copy that is more informative, consistent, and search-friendly for all three fields.</p></div>
+      <div class="step" style="--c:var(--pw)"><div class="num">STEP 05</div><h3>Publish the update</h3><p>Playwright fills in the optimized content in the listing editor and submits the change.</p></div>
+      <div class="step" style="--c:#8d9bb5"><div class="num">STEP 06</div><h3>Move to the next</h3><p>The loop continues through the catalogue, applying the same standard to 700+ listings.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= COMPONENTS ================= -->
+<section id="components">
+  <div class="wrap">
+    <div class="sec-head">
+      <div>
+        <div class="kicker">03 · Components</div>
+        <h2>Technology stack</h2>
+      </div>
+    </div>
+
+    <div class="comps">
+      <div class="comp">
+        <span class="badge" style="background:var(--core-soft);color:var(--core)">Orchestration</span>
+        <h3>Automation Workflow</h3>
+        <p>The control loop that moves through the catalogue and runs each stage in order.</p>
+        <ul><li>Listing-by-listing iteration</li><li>Coordinates read → AI → write</li></ul>
+      </div>
+      <div class="comp">
+        <span class="badge" style="background:var(--pw-soft);color:var(--pw)">Browser Automation</span>
+        <h3>Playwright</h3>
+        <p>Drives the Seller Central web interface the way a person would, at catalogue scale.</p>
+        <ul><li>Navigates to listing editors</li><li>Reads existing content</li><li>Fills and submits updates</li></ul>
+      </div>
+      <div class="comp">
+        <span class="badge" style="background:var(--ai-soft);color:var(--ai)">AI Model</span>
+        <h3>Claude</h3>
+        <p>Handles the judgment-heavy work: turning existing product copy into better listing content.</p>
+        <ul><li>Optimized product titles</li><li>Enhanced descriptions</li><li>Feature-focused bullet points</li></ul>
+      </div>
+      <div class="comp">
+        <span class="badge" style="background:var(--amz-soft);color:var(--amz)">Platform</span>
+        <h3>Amazon Seller Central</h3>
+        <p>Where the product listings are managed and where the optimized content is published.</p>
+        <ul><li>Source of current content</li><li>Destination for updates</li></ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= IMPACT ================= -->
+<section id="impact">
+  <div class="wrap">
+    <div class="sec-head">
+      <div>
+        <div class="kicker">04 · Outcome</div>
+        <h2>Business impact</h2>
+      </div>
+    </div>
+
+    <div class="impact">
+      <div class="big">
+        <div><b>700+</b><small>Product listings optimized through automation</small></div>
+        <div><b>60–70%</b><small>Reported sales increase following the rollout</small></div>
+      </div>
+      <div class="list">
+        <ul>
+          <li>Replaced repetitive, listing-by-listing manual editing</li>
+          <li>Consistent content standard across the whole catalogue</li>
+          <li>More informative, search-friendly product content</li>
+        </ul>
+      </div>
+    </div>
+    <p class="note">The sales increase is the reported post-implementation outcome. Sales are affected by many factors, including pricing, advertising, seasonality, and inventory, so this figure isn't attributed solely to the SEO automation.</p>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <span>AI-Powered Amazon SEO Automation · System Architecture</span>
+    <span>Claude · Playwright · Amazon Seller Central</span>
+  </div>
+</footer>
+
+<script>
+  // Download the architecture diagram as a standalone SVG (styles inlined)
+  document.getElementById('dl').addEventListener('click', function () {
+    var svg = document.getElementById('arch').cloneNode(true);
+    var css = [].slice.call(document.styleSheets).map(function (s) {
+      try { return [].slice.call(s.cssRules).map(function (r) { return r.cssText; }).join('\n'); }
+      catch (e) { return ''; }
+    }).join('\n');
+    var style = document.createElementNS('http://www.w3.org/2000/svg', 'style');
+    style.textContent = css;
+    svg.insertBefore(style, svg.firstChild);
+    var bg = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+    bg.setAttribute('width', '100%'); bg.setAttribute('height', '100%'); bg.setAttribute('fill', '#0a0d14');
+    svg.insertBefore(bg, style.nextSibling);
+    var blob = new Blob([new XMLSerializer().serializeToString(svg)], { type: 'image/svg+xml' });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'amazon-seo-automation-architecture.svg';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function () { URL.revokeObjectURL(a.href); }, 1000);
+  });
+</script>
+</body>
+</html>

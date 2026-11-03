@@ -1,9 +1,34 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { brand, navCta, navLinks } from "../../config/site";
 import { ArrowUpRightIcon, CloseIcon, MenuIcon } from "../ui/Icons";
 
 // Scroll distance (px) after which the bar condenses into a floating glass pill.
 const SCROLL_THRESHOLD = 24;
+
+// A section becomes current once its top crosses this share of the viewport.
+const SPY_LINE = 0.4;
+
+// The nav link whose section top most recently crossed the spy line. Picks the
+// closest crossed top rather than the last in nav order, so a section nested
+// inside another still wins. At the very bottom the last section wins, since a short
+// final section may never reach the line. Null over the hero.
+function currentSection(sections) {
+  const { innerHeight, scrollY } = window;
+  if (innerHeight + scrollY >= document.documentElement.scrollHeight - 2) {
+    return sections.at(-1)?.href ?? null;
+  }
+  const line = innerHeight * SPY_LINE;
+  let current = null;
+  let closest = -Infinity;
+  for (const { href, el } of sections) {
+    const top = el.getBoundingClientRect().top;
+    if (top <= line && top > closest) {
+      closest = top;
+      current = href;
+    }
+  }
+  return current;
+}
 
 // Fixed site navigation. Transparent over the hero on first paint; once the
 // page scrolls it narrows into a white glass pill with a blurred backdrop.
@@ -11,32 +36,45 @@ export default function SiteNav() {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [active, setActive] = useState(null);
-  const [indicator, setIndicator] = useState({ x: 0, w: 0, visible: false });
+  const [hovered, setHovered] = useState(null);
   const listRef = useRef(null);
+  const indicatorRef = useRef(null);
+  const toggleRef = useRef(null);
 
-  // Condense on scroll. One rAF-throttled passive listener.
+  // Condense and scroll-spy from one rAF-throttled passive listener. Reading
+  // positions on scroll (not an IntersectionObserver band) stays correct across
+  // pinned sections and the instant jumps of nav-link cuts.
   useEffect(() => {
+    const sections = navLinks
+      .map(({ href }) => ({ href, el: document.querySelector(href) }))
+      .filter(({ el }) => el);
     let frame = 0;
     const update = () => {
       frame = 0;
       setScrolled(window.scrollY > SCROLL_THRESHOLD);
+      setActive(currentSection(sections));
     };
     const onScroll = () => {
       if (!frame) frame = requestAnimationFrame(update);
     };
     update();
     window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll);
     return () => {
       window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
       cancelAnimationFrame(frame);
     };
   }, []);
 
-  // Close the mobile menu on Escape, and when the desktop layout takes over.
+  // Close the mobile menu on Escape (focus back to the toggle), and when the
+  // desktop layout takes over.
   useEffect(() => {
     if (!menuOpen) return;
     const onKeyDown = (event) => {
-      if (event.key === "Escape") setMenuOpen(false);
+      if (event.key !== "Escape") return;
+      setMenuOpen(false);
+      toggleRef.current?.focus();
     };
     const desktop = window.matchMedia("(min-width: 1024px)");
     const onChange = () => desktop.matches && setMenuOpen(false);
@@ -48,47 +86,46 @@ export default function SiteNav() {
     };
   }, [menuOpen]);
 
-  // Scroll-spy: highlight the link whose section crosses the viewport middle.
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        for (const { target, isIntersecting } of entries) {
-          const href = `#${target.id}`;
-          setActive((prev) => (isIntersecting ? href : prev === href ? null : prev));
-        }
-      },
-      { rootMargin: "-45% 0px -50% 0px" },
-    );
-    for (const { href } of navLinks) {
-      const section = document.querySelector(href);
-      if (section) observer.observe(section);
+  // One indicator, one rule: it sits under the hovered/focused link if there is
+  // one, otherwise under the current section's link. So a section change while
+  // the pointer rests on another link never pulls the pill away from it.
+  // Written straight to the element: no re-render per hover.
+  const target = hovered ?? active;
+  useLayoutEffect(() => {
+    const pill = indicatorRef.current;
+    const el = target && listRef.current?.querySelector(`[data-href="${target}"]`);
+    if (!pill) return;
+    if (el) {
+      pill.style.translate = `${el.offsetLeft}px 0`;
+      pill.style.width = `${el.offsetWidth}px`;
     }
-    return () => observer.disconnect();
-  }, []);
+    pill.style.opacity = el ? "1" : "0";
+  }, [target]);
 
-  // Slide the hover/active indicator under a link (or hide it).
-  const place = useCallback((el) => {
-    if (!el) return setIndicator((prev) => ({ ...prev, visible: false }));
-    setIndicator({ x: el.offsetLeft, w: el.offsetWidth, visible: true });
-  }, []);
-
-  const placeActive = useCallback(() => {
-    const el = active && listRef.current?.querySelector(`[data-href="${active}"]`);
-    place(el);
-  }, [active, place]);
-
-  useEffect(placeActive, [placeActive]);
-
-  const closeMenu = () => setMenuOpen(false);
+  // Any link in the header (brand, sections, CTA) closes the mobile menu, as
+  // does a tap on the bare header area around the bar.
+  const onHeaderClick = (event) => {
+    if (event.target === event.currentTarget || event.target.closest("a")) setMenuOpen(false);
+  };
 
   const focusRing = scrolled ? "focus-visible:outline-sky" : "";
 
   return (
     <header
+      onClick={onHeaderClick}
       className={`fixed inset-x-0 top-0 z-50 px-4 transition-[padding] duration-500 ease-ui motion-reduce:transition-none sm:px-6 lg:px-10 ${
         scrolled ? "pt-3 sm:pt-4" : "pt-4 sm:pt-6 lg:pt-10"
       }`}
     >
+      {/* Dims the page behind the open mobile menu; a tap anywhere on it closes
+          the menu. Behind the bar and panel (header is its stacking context). */}
+      <div
+        aria-hidden="true"
+        onClick={() => setMenuOpen(false)}
+        className={`fixed inset-0 -z-10 bg-ink/30 transition-opacity duration-300 ease-ui motion-reduce:transition-none lg:hidden ${
+          menuOpen ? "opacity-100" : "pointer-events-none opacity-0"
+        }`}
+      />
       <nav
         aria-label="Primary"
         className={`relative mx-auto flex items-center justify-between rounded-2xl border transition-[width,height,padding,background-color,border-color,box-shadow,backdrop-filter] duration-500 ease-ui motion-reduce:transition-none ${
@@ -107,16 +144,16 @@ export default function SiteNav() {
         {/* Desktop links, centred on the bar rather than between siblings. */}
         <ul
           ref={listRef}
-          onMouseLeave={placeActive}
-          onBlur={placeActive}
+          onMouseLeave={() => setHovered(null)}
+          onBlur={() => setHovered(null)}
           className="absolute left-1/2 hidden -translate-x-1/2 items-center lg:flex"
         >
           <li
+            ref={indicatorRef}
             aria-hidden="true"
-            style={{ translate: `${indicator.x}px 0`, width: indicator.w }}
-            className={`pointer-events-none absolute inset-y-0 left-0 my-auto h-9 rounded-xl transition-[translate,width,opacity,background-color] duration-300 ease-ui motion-reduce:transition-none ${
-              indicator.visible ? "opacity-100" : "opacity-0"
-            } ${scrolled ? "bg-sky/10" : "bg-white/15"}`}
+            className={`pointer-events-none absolute inset-y-0 left-0 my-auto h-9 rounded-xl opacity-0 transition-[translate,width,opacity,background-color] duration-300 ease-ui motion-reduce:transition-none ${
+              scrolled ? "bg-sky/10" : "bg-white/15"
+            }`}
           />
           {navLinks.map((link) => (
             <li key={link.href}>
@@ -124,8 +161,8 @@ export default function SiteNav() {
                 href={link.href}
                 data-href={link.href}
                 aria-current={active === link.href ? "true" : undefined}
-                onMouseEnter={(e) => place(e.currentTarget)}
-                onFocus={(e) => place(e.currentTarget)}
+                onMouseEnter={() => setHovered(link.href)}
+                onFocus={() => setHovered(link.href)}
                 className={`relative flex h-9 items-center rounded-xl px-4 text-[0.9375rem] font-medium tracking-[-0.01em] transition-colors duration-300 ease-ui ${focusRing}`}
               >
                 {link.label}
@@ -148,6 +185,7 @@ export default function SiteNav() {
           </a>
 
           <button
+            ref={toggleRef}
             type="button"
             onClick={() => setMenuOpen((open) => !open)}
             aria-expanded={menuOpen}
@@ -196,7 +234,6 @@ export default function SiteNav() {
             >
               <a
                 href={link.href}
-                onClick={closeMenu}
                 aria-current={active === link.href ? "true" : undefined}
                 className={`flex h-13 items-center justify-between rounded-xl px-4 text-lg font-medium tracking-[-0.015em] transition-colors duration-200 ease-ui ${focusRing} ${
                   scrolled ? "hover:bg-sky/10 aria-[current]:bg-sky/10" : "hover:bg-white/10 aria-[current]:bg-white/10"

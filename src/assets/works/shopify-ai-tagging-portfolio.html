@@ -1,0 +1,636 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI-Assisted Bulk Product Tagging for Shopify</title>
+<meta name="description" content="An n8n workflow that turns an Excel sheet of SKUs into AI-assisted tag updates across a Shopify catalog, with a full execution report.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #ffffff;
+    --surface: #f6f6f6;
+    --surface-2: #ececec;
+    --text: #0a0a0a;
+    --muted: #5c5c5c;
+    --faint: #8a8a8a;
+    --line: #e2e2e2;
+    --graphite: #2b2b2b;
+    --invert-bg: #0a0a0a;
+    --invert-text: #ffffff;
+    --radius: 14px;
+    --max: 1080px;
+    --sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0a0a0a;
+      --surface: #141414;
+      --surface-2: #1d1d1d;
+      --text: #f5f5f5;
+      --muted: #a3a3a3;
+      --faint: #6e6e6e;
+      --line: #262626;
+      --graphite: #d4d4d4;
+      --invert-bg: #f5f5f5;
+      --invert-text: #0a0a0a;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0a0a0a; --surface: #141414; --surface-2: #1d1d1d; --text: #f5f5f5;
+    --muted: #a3a3a3; --faint: #6e6e6e; --line: #262626; --graphite: #d4d4d4;
+    --invert-bg: #f5f5f5; --invert-text: #0a0a0a;
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 16px;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: var(--max); margin: 0 auto; padding: 0 24px; }
+  @media (max-width: 600px) { .wrap { padding: 0 16px; } }
+
+  /* Top bar */
+  .topbar {
+    position: sticky; top: 0; z-index: 10;
+    background: color-mix(in srgb, var(--bg) 85%, transparent);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--line);
+  }
+  .topbar .wrap { display: flex; align-items: center; justify-content: space-between; height: 56px; gap: 16px; }
+  .brand { font-weight: 600; font-size: 14px; letter-spacing: -0.01em; }
+  .toc { display: flex; gap: 20px; font-size: 13px; overflow-x: auto; scrollbar-width: none; }
+  .toc::-webkit-scrollbar { display: none; }
+  .toc a { color: var(--muted); text-decoration: none; white-space: nowrap; transition: color .2s; }
+  .toc a:hover { color: var(--text); }
+  .theme-btn {
+    flex: none; border: 1px solid var(--line); background: transparent; color: var(--text);
+    border-radius: 999px; padding: 6px 12px; font: 500 12px var(--sans); cursor: pointer;
+  }
+  @media (max-width: 760px) { .toc { display: none; } }
+
+  /* Hero */
+  .hero { padding: 96px 0 64px; }
+  .eyebrow {
+    font-family: var(--mono); font-size: 12px; letter-spacing: .08em; text-transform: uppercase;
+    color: var(--faint);
+  }
+  h1 {
+    font-size: clamp(36px, 6vw, 64px); line-height: 1.05; letter-spacing: -0.035em;
+    font-weight: 700; margin: 16px 0 24px; max-width: 14ch;
+  }
+  .lede { font-size: clamp(17px, 2vw, 20px); color: var(--muted); max-width: 62ch; margin: 0; }
+  .tags { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 32px; }
+  .tag {
+    font-family: var(--mono); font-size: 12px; padding: 5px 10px; border-radius: 999px;
+    border: 1px solid var(--line); color: var(--muted); background: var(--surface);
+  }
+  .meta {
+    display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1px;
+    background: var(--line); border: 1px solid var(--line); border-radius: var(--radius);
+    overflow: hidden; margin-top: 56px;
+  }
+  .meta div { background: var(--bg); padding: 20px 24px; }
+  .meta dt { font-size: 12px; color: var(--faint); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 4px; }
+  .meta dd { margin: 0; font-weight: 500; font-size: 15px; }
+  @media (max-width: 700px) { .meta { grid-template-columns: 1fr; } }
+
+  /* Sections */
+  section { padding: 72px 0; border-top: 1px solid var(--line); }
+  .sec-head { display: grid; grid-template-columns: 200px 1fr; gap: 32px; }
+  @media (max-width: 800px) { .sec-head { grid-template-columns: 1fr; gap: 12px; } }
+  .sec-num { font-family: var(--mono); font-size: 12px; color: var(--faint); letter-spacing: .06em; padding-top: 8px; }
+  h2 { font-size: clamp(26px, 3.4vw, 36px); letter-spacing: -0.025em; line-height: 1.15; margin: 0 0 20px; font-weight: 650; }
+  h3 { font-size: 17px; letter-spacing: -0.01em; margin: 0 0 6px; font-weight: 600; }
+  p { margin: 0 0 16px; }
+  .muted { color: var(--muted); }
+  .prose { max-width: 68ch; }
+  .placeholder {
+    font-family: var(--mono); font-size: .85em; background: var(--surface-2); color: var(--text);
+    padding: 1px 6px; border-radius: 5px; border: 1px dashed var(--faint); white-space: nowrap;
+  }
+
+  /* Problem list */
+  .problems { list-style: none; padding: 0; margin: 8px 0 24px; display: grid; gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }
+  .problems li { background: var(--bg); padding: 18px 22px; display: grid; grid-template-columns: 28px 1fr; gap: 12px; }
+  .problems li span.i { font-family: var(--mono); font-size: 12px; color: var(--faint); padding-top: 3px; }
+  .problems b { font-weight: 600; }
+  .callout {
+    border-left: 2px solid var(--text); padding: 4px 0 4px 20px; color: var(--muted); max-width: 64ch;
+  }
+
+  /* Card grid */
+  .grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+  .grid.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  @media (max-width: 900px) { .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (max-width: 600px) { .grid, .grid.two { grid-template-columns: 1fr; } }
+  .card {
+    border: 1px solid var(--line); border-radius: var(--radius); padding: 24px; background: var(--bg);
+    transition: border-color .25s, transform .25s;
+  }
+  .card:hover { border-color: var(--graphite); transform: translateY(-2px); }
+  .card p { color: var(--muted); font-size: 15px; margin: 0; }
+  .icon {
+    width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center;
+    background: var(--surface); border: 1px solid var(--line); margin-bottom: 16px;
+  }
+  .icon svg { width: 18px; height: 18px; stroke: var(--text); fill: none; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+  .card.ai { background: var(--invert-bg); color: var(--invert-text); border-color: var(--invert-bg); }
+  .card.ai p { color: color-mix(in srgb, var(--invert-text) 70%, transparent); }
+  .card.ai .icon { background: transparent; border-color: color-mix(in srgb, var(--invert-text) 25%, transparent); }
+  .card.ai .icon svg { stroke: var(--invert-text); }
+
+  /* Steps */
+  .steps { list-style: none; padding: 0; margin: 0; counter-reset: s; }
+  .steps li {
+    counter-increment: s; display: grid; grid-template-columns: 56px 1fr; gap: 16px;
+    padding: 20px 0; border-bottom: 1px solid var(--line);
+  }
+  .steps li:last-child { border-bottom: 0; }
+  .steps li::before {
+    content: counter(s, decimal-leading-zero); font-family: var(--mono); font-size: 13px; color: var(--faint); padding-top: 2px;
+  }
+  .steps li.ai-step h3::after {
+    content: "AI"; font-family: var(--mono); font-size: 10px; margin-left: 10px; padding: 2px 7px;
+    border-radius: 999px; background: var(--invert-bg); color: var(--invert-text); vertical-align: 2px;
+  }
+  .steps p { color: var(--muted); margin: 0; font-size: 15px; }
+
+  /* Diagram */
+  .diagram {
+    margin-top: 40px; border: 1px solid var(--line); border-radius: var(--radius);
+    background: var(--surface); padding: 28px; overflow-x: auto;
+  }
+  .diagram svg { display: block; min-width: 860px; width: 100%; height: auto; }
+  .d-node rect, .d-node polygon { fill: var(--bg); stroke: var(--graphite); stroke-width: 1.2; }
+  .d-node text { fill: var(--text); font: 500 13px var(--sans); text-anchor: middle; }
+  .d-node text.sub { fill: var(--faint); font: 400 11px var(--mono); }
+  .d-node.io rect { fill: var(--invert-bg); stroke: var(--invert-bg); }
+  .d-node.io text { fill: var(--invert-text); }
+  .d-node.io text.sub { fill: color-mix(in srgb, var(--invert-text) 60%, transparent); }
+  .d-node.ai rect { fill: var(--graphite); stroke: var(--graphite); }
+  .d-node.ai text { fill: var(--bg); }
+  .d-node.ai text.sub { fill: color-mix(in srgb, var(--bg) 65%, transparent); }
+  .d-node.out rect { fill: var(--surface-2); stroke: var(--faint); stroke-dasharray: 0; }
+  .d-edge { fill: none; stroke: var(--faint); stroke-width: 1.3; }
+  .d-label { fill: var(--muted); font: 400 11px var(--mono); }
+  .d-arrow { fill: var(--faint); }
+  .diagram-note { font-size: 13px; color: var(--faint); margin-top: 14px; }
+
+  .flow-anim .d-edge { stroke-dasharray: 5 5; animation: dash 1.4s linear infinite; }
+  @keyframes dash { to { stroke-dashoffset: -20; } }
+
+  details.mermaid-src { margin-top: 20px; border: 1px solid var(--line); border-radius: 10px; }
+  details.mermaid-src summary { cursor: pointer; padding: 12px 16px; font-size: 14px; font-weight: 500; list-style: none; display: flex; justify-content: space-between; align-items: center; }
+  details.mermaid-src summary::-webkit-details-marker { display: none; }
+  details.mermaid-src summary::after { content: "+"; font-family: var(--mono); color: var(--faint); }
+  details.mermaid-src[open] summary::after { content: "−"; }
+  .code-wrap { position: relative; border-top: 1px solid var(--line); }
+  pre {
+    margin: 0; padding: 18px; overflow-x: auto; font: 12.5px/1.6 var(--mono); color: var(--text);
+    background: var(--surface);
+  }
+  .copy {
+    position: absolute; top: 10px; right: 10px; border: 1px solid var(--line); background: var(--bg);
+    color: var(--text); font: 500 12px var(--sans); padding: 5px 10px; border-radius: 7px; cursor: pointer;
+  }
+
+  /* Table */
+  .stack { width: 100%; border-collapse: collapse; font-size: 15px; }
+  .stack th, .stack td { text-align: left; padding: 14px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+  .stack th { width: 34%; font-weight: 500; color: var(--muted); padding-right: 16px; }
+  .stack tr:last-child th, .stack tr:last-child td { border-bottom: 0; }
+
+  /* Outcome */
+  .outcome {
+    background: var(--invert-bg); color: var(--invert-text); border-radius: 20px;
+    padding: clamp(32px, 6vw, 64px);
+  }
+  .outcome .eyebrow { color: color-mix(in srgb, var(--invert-text) 55%, transparent); }
+  .outcome blockquote {
+    margin: 16px 0 0; font-size: clamp(20px, 2.6vw, 28px); line-height: 1.4; letter-spacing: -0.015em; font-weight: 500;
+  }
+
+  /* Enhancements */
+  .future { list-style: none; padding: 0; margin: 0; display: grid; gap: 10px; }
+  .future li {
+    padding: 14px 18px; border: 1px dashed var(--faint); border-radius: 10px; color: var(--muted); font-size: 15px;
+    display: flex; gap: 12px; align-items: baseline;
+  }
+  .future li::before { content: "Planned"; font: 500 10px var(--mono); text-transform: uppercase; letter-spacing: .06em; color: var(--faint); flex: none; width: 56px; }
+
+  /* Project card preview */
+  .preview-card {
+    max-width: 420px; border: 1px solid var(--line); border-radius: 18px; overflow: hidden; background: var(--bg);
+    transition: transform .3s, border-color .3s;
+  }
+  .preview-card:hover { transform: translateY(-4px); border-color: var(--graphite); }
+  .preview-thumb {
+    aspect-ratio: 16/9; background:
+      radial-gradient(circle at 1px 1px, color-mix(in srgb, var(--faint) 45%, transparent) 1px, transparent 0) 0 0/18px 18px,
+      var(--surface);
+    display: grid; place-items: center; border-bottom: 1px solid var(--line);
+  }
+  .preview-thumb .mini { display: flex; align-items: center; gap: 8px; }
+  .preview-thumb .mini i { display: block; width: 34px; height: 22px; border: 1px solid var(--graphite); border-radius: 5px; background: var(--bg); }
+  .preview-thumb .mini i.dark { background: var(--invert-bg); border-color: var(--invert-bg); }
+  .preview-thumb .mini b { display: block; width: 14px; height: 1px; background: var(--faint); }
+  .preview-body { padding: 22px; }
+  .preview-body .eyebrow { font-size: 11px; }
+  .preview-body h3 { font-size: 19px; margin: 8px 0 8px; letter-spacing: -0.02em; }
+  .preview-body p { color: var(--muted); font-size: 14.5px; margin: 0 0 16px; }
+  .preview-body .tags { margin-top: 0; gap: 6px; }
+  .preview-body .tag { font-size: 11px; padding: 3px 8px; }
+
+  .titles { counter-reset: t; list-style: none; padding: 0; margin: 0; display: grid; gap: 12px; }
+  .titles li { counter-increment: t; padding: 18px 20px; border: 1px solid var(--line); border-radius: 12px; display: grid; grid-template-columns: 32px 1fr; }
+  .titles li::before { content: counter(t, decimal-leading-zero); font: 12px var(--mono); color: var(--faint); padding-top: 3px; }
+  .titles li.rec { border-color: var(--text); }
+  .titles li.rec .badge { font: 500 10px var(--mono); text-transform: uppercase; letter-spacing: .06em; background: var(--invert-bg); color: var(--invert-text); padding: 2px 8px; border-radius: 999px; margin-left: 8px; vertical-align: 2px; }
+  .titles small { display: block; color: var(--muted); font-size: 14px; margin-top: 2px; }
+
+  .shots { counter-reset: sh; }
+  .shots .card { counter-increment: sh; }
+  .shots .card h3::before { content: counter(sh, decimal-leading-zero) "  "; font: 12px var(--mono); color: var(--faint); white-space: pre; }
+
+  footer { padding: 48px 0 64px; border-top: 1px solid var(--line); color: var(--faint); font-size: 13px; }
+
+  /* Reveal */
+  .reveal { opacity: 0; transform: translateY(16px); transition: opacity .7s ease, transform .7s ease; }
+  .reveal.in { opacity: 1; transform: none; }
+  @media (prefers-reduced-motion: reduce) {
+    .reveal { opacity: 1; transform: none; transition: none; }
+    .flow-anim .d-edge { animation: none; stroke-dasharray: none; }
+    html { scroll-behavior: auto; }
+  }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="wrap">
+    <div class="brand">Case Study · Automation</div>
+    <nav class="toc" aria-label="Sections">
+      <a href="#problem">Problem</a>
+      <a href="#solution">Solution</a>
+      <a href="#architecture">Architecture</a>
+      <a href="#features">Features</a>
+      <a href="#stack">Stack</a>
+      <a href="#impact">Impact</a>
+      <a href="#assets">Assets</a>
+    </nav>
+    <button class="theme-btn" id="themeBtn" type="button" aria-label="Toggle color theme">Theme</button>
+  </div>
+</header>
+
+<main>
+  <!-- HERO -->
+  <div class="wrap hero reveal">
+    <div class="eyebrow">Intelligent Automation · E-commerce Operations</div>
+    <h1>AI-Assisted Bulk Product Tagging for Shopify</h1>
+    <p class="lede">An n8n workflow that turns an Excel sheet of SKUs into checked, AI-assisted tag updates across a Shopify catalog, with a full execution report at the end.</p>
+    <div class="tags">
+      <span class="tag">n8n</span><span class="tag">Shopify</span><span class="tag">LLM</span>
+      <span class="tag">Workflow Automation</span><span class="tag">Excel Processing</span><span class="tag">E-commerce</span>
+    </div>
+    <dl class="meta">
+      <div><dt>Role</dt><dd>AI / Automation Engineer</dd></div>
+      <div><dt>Platform</dt><dd>n8n · Shopify</dd></div>
+      <div><dt>Focus</dt><dd>Bulk catalog operations</dd></div>
+    </dl>
+  </div>
+
+  <!-- INTRO -->
+  <section id="intro">
+    <div class="wrap sec-head reveal">
+      <div class="sec-num">01 — Overview</div>
+      <div class="prose">
+        <h2>From thousands of manual edits to one file upload</h2>
+        <p>I built an n8n workflow that automates bulk product tag management in Shopify. The operations team uploads an Excel file of SKUs and instructions. The workflow finds each product, uses an LLM to decide or generate tags where needed, writes the changes to Shopify, and returns a report showing what succeeded, what failed and what couldn't be matched.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- PROBLEM -->
+  <section id="problem">
+    <div class="wrap sec-head reveal">
+      <div class="sec-num">02 — Problem</div>
+      <div>
+        <h2>Manual work that grew with the catalog</h2>
+        <p class="muted prose">Updating tags across a large Shopify catalog meant handling every product by hand.</p>
+        <ul class="problems">
+          <li><span class="i">01</span><div><b>One product at a time.</b> <span class="muted">Each SKU had to be searched, opened, edited, saved and checked separately.</span></div></li>
+          <li><span class="i">02</span><div><b>The work grows with the catalog.</b> <span class="muted">Thousands of products meant thousands of repeated steps.</span></div></li>
+          <li><span class="i">03</span><div><b>Inconsistent tags.</b> <span class="muted">When people pick tags by hand, naming and coverage drift over time.</span></div></li>
+          <li><span class="i">04</span><div><b>No clear audit trail.</b> <span class="muted">Tracking completed, failed and missing updates needed separate manual records.</span></div></li>
+          <li><span class="i">05</span><div><b>Hard to catch errors.</b> <span class="muted">A wrong or missing SKU could easily go unnoticed.</span></div></li>
+        </ul>
+        <p class="callout">The process was repetitive, followed clear rules and had little room for error, which made it a good fit for automation.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- SOLUTION -->
+  <section id="solution">
+    <div class="wrap sec-head reveal">
+      <div class="sec-num">03 — Solution</div>
+      <div class="prose">
+        <h2>Deterministic where possible, AI where it counts</h2>
+        <p>I replaced the manual loop with a single workflow. The team works in a tool they already use (Excel) and submits a batch. n8n handles the orchestration, the Shopify API calls and the record-keeping.</p>
+        <p>AI only runs at the step that needs judgment: deciding or generating tags from product information. Lookup, updates and reporting stay rule-based, so they behave the same way every run.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ARCHITECTURE -->
+  <section id="architecture">
+    <div class="wrap">
+      <div class="sec-head reveal">
+        <div class="sec-num">04 — Architecture</div>
+        <div>
+          <h2>Workflow architecture</h2>
+          <ol class="steps">
+            <li><div><h3>Upload</h3><p>The user submits an Excel file with SKUs and update instructions <span class="placeholder">[via n8n Form / webhook / other]</span>.</p></div></li>
+            <li><div><h3>Parse</h3><p>n8n extracts the rows and turns them into structured items.</p></div></li>
+            <li><div><h3>Identify</h3><p>Each SKU is matched to its Shopify product.</p></div></li>
+            <li class="ai-step"><div><h3>AI tagging</h3><p>Where instructions call for it, an LLM reads the product data and suggests or generates relevant tags.</p></div></li>
+            <li><div><h3>Update</h3><p>Tags are written to the matched product through the Shopify integration.</p></div></li>
+            <li><div><h3>Persist</h3><p>Changes are saved directly to the live store.</p></div></li>
+            <li><div><h3>Report</h3><p>Every row is sorted into <em>Updated</em>, <em>Failed</em> or <em>Unmatched SKU</em> and compiled into a final report <span class="placeholder">[format: Excel / CSV / email]</span>.</p></div></li>
+          </ol>
+        </div>
+      </div>
+
+      <div class="diagram reveal flow-anim" role="img" aria-label="Workflow diagram: Excel upload, parse, SKU lookup, optional LLM tagging, Shopify update, then outcomes compiled into an execution report.">
+        <svg viewBox="0 0 1240 360" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path class="d-arrow" d="M0,0 L10,5 L0,10 z"/>
+            </marker>
+          </defs>
+
+          <!-- Edges -->
+          <path class="d-edge" d="M140 178 H168" marker-end="url(#arr)"/>
+          <path class="d-edge" d="M290 178 H318" marker-end="url(#arr)"/>
+          <path class="d-edge" d="M440 178 H478" marker-end="url(#arr)"/>
+          <text class="d-label" x="446" y="168">match</text>
+          <path class="d-edge" d="M530 128 V108 H638" marker-end="url(#arr)"/>
+          <text class="d-label" x="560" y="100">yes</text>
+          <path class="d-edge" d="M530 228 V248 H638" marker-end="url(#arr)"/>
+          <text class="d-label" x="560" y="268">no</text>
+          <path class="d-edge" d="M760 108 H775 V170 H788" marker-end="url(#arr)"/>
+          <path class="d-edge" d="M760 248 H775 V186 H788" marker-end="url(#arr)"/>
+          <path class="d-edge" d="M910 170 H930 V98 H948" marker-end="url(#arr)"/>
+          <path class="d-edge" d="M910 186 H930 V258 H948" marker-end="url(#arr)"/>
+          <path class="d-edge" d="M1070 98 H1085 V170 H1098" marker-end="url(#arr)"/>
+          <path class="d-edge" d="M1070 258 H1085 V186 H1098" marker-end="url(#arr)"/>
+          <path class="d-edge" d="M380 206 V288" marker-end="url(#arr)"/>
+          <text class="d-label" x="390" y="252">no match</text>
+          <path class="d-edge" d="M440 318 H1160 V208" marker-end="url(#arr)"/>
+
+          <!-- Nodes -->
+          <g class="d-node io"><rect x="20" y="150" width="120" height="56" rx="10"/><text x="80" y="174">Excel Upload</text><text class="sub" x="80" y="192">SKUs + rules</text></g>
+          <g class="d-node"><rect x="170" y="150" width="120" height="56" rx="10"/><text x="230" y="174">Parse Rows</text><text class="sub" x="230" y="192">n8n</text></g>
+          <g class="d-node"><rect x="320" y="150" width="120" height="56" rx="10"/><text x="380" y="174">SKU Lookup</text><text class="sub" x="380" y="192">Shopify</text></g>
+          <g class="d-node"><polygon points="530,128 580,178 530,228 480,178"/><text x="530" y="174">AI</text><text class="sub" x="530" y="190">needed?</text></g>
+          <g class="d-node ai"><rect x="640" y="80" width="120" height="56" rx="10"/><text x="700" y="104">LLM Tagging</text><text class="sub" x="700" y="122">generate tags</text></g>
+          <g class="d-node"><rect x="640" y="220" width="120" height="56" rx="10"/><text x="700" y="244">Sheet Tags</text><text class="sub" x="700" y="262">from Excel</text></g>
+          <g class="d-node"><rect x="790" y="150" width="120" height="56" rx="10"/><text x="850" y="174">Update Tags</text><text class="sub" x="850" y="192">Shopify API</text></g>
+          <g class="d-node out"><rect x="950" y="70" width="120" height="56" rx="10"/><text x="1010" y="103">Updated</text></g>
+          <g class="d-node out"><rect x="950" y="230" width="120" height="56" rx="10"/><text x="1010" y="263">Failed</text></g>
+          <g class="d-node out"><rect x="320" y="290" width="120" height="56" rx="10"/><text x="380" y="323">Unmatched</text></g>
+          <g class="d-node io"><rect x="1100" y="150" width="120" height="56" rx="10"/><text x="1160" y="174">Report</text><text class="sub" x="1160" y="192">execution log</text></g>
+        </svg>
+      </div>
+      <p class="diagram-note">The "AI needed?" branch reflects AI being used only where required. If AI runs on every product, remove that decision node.</p>
+
+      <details class="mermaid-src">
+        <summary>Mermaid source</summary>
+        <div class="code-wrap">
+          <button class="copy" type="button" data-copy="mermaidCode">Copy</button>
+<pre id="mermaidCode">flowchart LR
+    A[/"Excel Upload&lt;br/&gt;SKUs + Instructions"/] --&gt; B["Parse &amp; Normalize&lt;br/&gt;(n8n)"]
+    B --&gt; C["SKU Lookup&lt;br/&gt;(Shopify)"]
+    C --&gt;|Match found| D{"AI Tagging&lt;br/&gt;Required?"}
+    C --&gt;|No match| R1["Unmatched SKUs"]
+    D --&gt;|Yes| E["LLM&lt;br/&gt;Tag Generation"]
+    D --&gt;|No| F["Apply Tags from Sheet"]
+    E --&gt; G["Update Product Tags&lt;br/&gt;(Shopify API)"]
+    F --&gt; G
+    G --&gt;|Success| R2["Updated"]
+    G --&gt;|Error| R3["Failed"]
+    R1 --&gt; H[/"Execution Report"/]
+    R2 --&gt; H
+    R3 --&gt; H
+
+    classDef io fill:#0a0a0a,stroke:#0a0a0a,color:#fff
+    classDef step fill:#fff,stroke:#2b2b2b,color:#0a0a0a
+    classDef ai fill:#2b2b2b,stroke:#2b2b2b,color:#fff
+    classDef out fill:#f2f2f2,stroke:#8a8a8a,color:#2b2b2b
+    class A,H io
+    class B,C,F,G,D step
+    class E ai
+    class R1,R2,R3 out</pre>
+        </div>
+      </details>
+    </div>
+  </section>
+
+  <!-- FEATURES -->
+  <section id="features">
+    <div class="wrap">
+      <div class="sec-head reveal">
+        <div class="sec-num">05 — Features</div>
+        <div><h2>Key features</h2></div>
+      </div>
+      <div class="grid reveal" style="margin-top:24px">
+        <div class="card">
+          <div class="icon"><svg viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg></div>
+          <h3>Excel-in workflow</h3><p>The ops team doesn't need new tools or training.</p>
+        </div>
+        <div class="card">
+          <div class="icon"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"/><path d="m20 20-4.5-4.5"/></svg></div>
+          <h3>SKU-based matching</h3><p>Updates are tied to each product's unique identifier.</p>
+        </div>
+        <div class="card ai">
+          <div class="icon"><svg viewBox="0 0 24 24"><path d="M12 3v3M12 18v3M3 12h3M18 12h3M6 6l2 2M16 16l2 2M6 18l2-2M16 8l2-2"/><circle cx="12" cy="12" r="3"/></svg></div>
+          <h3>AI where judgment is needed</h3><p>The LLM only handles tag decisions. Everything else follows fixed rules.</p>
+        </div>
+        <div class="card">
+          <div class="icon"><svg viewBox="0 0 24 24"><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8Z"/><circle cx="7.5" cy="7.5" r="1"/></svg></div>
+          <h3>Direct Shopify updates</h3><p>Nobody has to edit products in the admin panel.</p>
+        </div>
+        <div class="card">
+          <div class="icon"><svg viewBox="0 0 24 24"><path d="M4 12h4l2-5 4 10 2-5h4"/></svg></div>
+          <h3>Clear three-way outcomes</h3><p>Every row is accounted for: updated, failed or unmatched.</p>
+        </div>
+        <div class="card">
+          <div class="icon"><svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg></div>
+          <h3>Execution report</h3><p>The report replaces manual tracking spreadsheets.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- STACK -->
+  <section id="stack">
+    <div class="wrap sec-head reveal">
+      <div class="sec-num">06 — Stack</div>
+      <div>
+        <h2>Technology stack</h2>
+        <table class="stack">
+          <tr><th>Orchestration</th><td>n8n</td></tr>
+          <tr><th>Input</th><td>Excel (.xlsx), parsed with n8n's file extraction</td></tr>
+          <tr><th>Commerce platform</th><td>Shopify (Admin API / n8n Shopify integration)</td></tr>
+          <tr><th>AI</th><td><span class="placeholder">[LLM provider / model]</span>, called from n8n</td></tr>
+          <tr><th>Output</th><td>Execution report <span class="placeholder">[format]</span></td></tr>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- IMPACT -->
+  <section id="impact">
+    <div class="wrap">
+      <div class="sec-head reveal">
+        <div class="sec-num">07 — Impact</div>
+        <div><h2>Business impact</h2></div>
+      </div>
+      <div class="grid reveal" style="margin-top:24px">
+        <div class="card"><h3>Less repetitive work</h3><p>The find-edit-save-verify loop no longer has to be done by hand for each product.</p></div>
+        <div class="card"><h3>Faster bulk changes</h3><p>A catalog-wide tag update becomes one file upload instead of thousands of individual edits.</p></div>
+        <div class="card"><h3>More consistent tags</h3><p>AI-assisted tagging follows the same logic on every run, which reduces drift between people.</p></div>
+        <div class="card"><h3>Better visibility</h3><p>Each run produces a record of what changed and what needs attention.</p></div>
+        <div class="card"><h3>Handles larger catalogs</h3><p>Throughput depends on the workflow and API limits rather than staff time.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- OUTCOME -->
+  <section id="outcome">
+    <div class="wrap reveal">
+      <div class="outcome">
+        <div class="eyebrow">08 — Outcome</div>
+        <blockquote>I turned a manual, error-prone catalog task into a repeatable, auditable pipeline. The operations team now runs bulk tag updates from a spreadsheet and gets a clear report of every success, failure and unmatched SKU — keeping deterministic steps deterministic, and using AI only where judgment adds value.</blockquote>
+      </div>
+    </div>
+  </section>
+
+  <!-- FUTURE -->
+  <section id="future">
+    <div class="wrap sec-head reveal">
+      <div class="sec-num">09 — Next</div>
+      <div>
+        <h2>Possible enhancements</h2>
+        <p class="muted">Not built yet — listed separately from implemented features.</p>
+        <ul class="future">
+          <li>Dry-run or preview mode for approving AI-generated tags before they're written</li>
+          <li>Automatic retries with backoff for failed API calls</li>
+          <li>Support for fields beyond tags, such as titles, descriptions and metafields</li>
+          <li>Scheduled or trigger-based runs, for example from a shared drive folder</li>
+          <li>Tag validation against a controlled vocabulary</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- CARD + TITLES -->
+  <section id="card">
+    <div class="wrap">
+      <div class="sec-head reveal">
+        <div class="sec-num">10 — Project card</div>
+        <div><h2>Portfolio card &amp; title options</h2></div>
+      </div>
+      <div class="grid two reveal" style="margin-top:24px; align-items:start">
+        <article class="preview-card">
+          <div class="preview-thumb" aria-hidden="true">
+            <div class="mini"><i class="dark"></i><b></b><i></i><b></b><i></i><b></b><i class="dark"></i></div>
+          </div>
+          <div class="preview-body">
+            <div class="eyebrow">Intelligent Automation · E-commerce Ops</div>
+            <h3>AI-Assisted Bulk Product Tagging for Shopify</h3>
+            <p>An n8n workflow that turns an Excel sheet of SKUs into checked, AI-assisted tag updates across a Shopify catalog, with a full execution report.</p>
+            <div class="tags"><span class="tag">n8n</span><span class="tag">Shopify</span><span class="tag">LLM</span><span class="tag">Automation</span></div>
+          </div>
+        </article>
+        <ol class="titles">
+          <li><div><b>Shopify Catalog Ops Automation</b><small>SKU-driven bulk tag management with n8n and LLMs</small></div></li>
+          <li class="rec"><div><b>AI-Assisted Bulk Product Tagging for Shopify</b><span class="badge">Recommended</span><small>Names the platform, the task and the AI part — scannable without overstating.</small></div></li>
+          <li><div><b>Spreadsheet-to-Shopify</b><small>An Intelligent Product Update Pipeline</small></div></li>
+        </ol>
+      </div>
+    </div>
+  </section>
+
+  <!-- ASSETS -->
+  <section id="assets">
+    <div class="wrap">
+      <div class="sec-head reveal">
+        <div class="sec-num">11 — Visual assets</div>
+        <div>
+          <h2>Screenshots to capture</h2>
+          <p class="muted prose">Use real captures from the workflow. Blur the store name, product data and API keys.</p>
+        </div>
+      </div>
+      <div class="grid shots reveal" style="margin-top:24px">
+        <div class="card"><h3>Hero canvas</h3><p>The full n8n canvas, zoomed out, on a dark background.</p></div>
+        <div class="card"><h3>Input file</h3><p>A sample Excel file with 5–10 rows of dummy SKUs.</p></div>
+        <div class="card"><h3>AI node</h3><p>Close-up of the LLM node: prompt structure and one input/output pair.</p></div>
+        <div class="card"><h3>Before / after</h3><p>A product's tags before and after a run, side by side.</p></div>
+        <div class="card"><h3>Execution log</h3><p>n8n's execution view showing a completed run.</p></div>
+        <div class="card"><h3>Final report</h3><p>All three groups — Updated, Failed, Unmatched — visible.</p></div>
+      </div>
+      <p class="muted" style="margin-top:20px; font-size:15px">Optional: a 20–30 second screen recording of one full run, from upload to report, autoplaying on the detail page.</p>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">Bracketed items are placeholders — confirm or remove before publishing.</div>
+</footer>
+
+<script>
+  // Theme toggle
+  (function () {
+    var root = document.documentElement;
+    var btn = document.getElementById('themeBtn');
+    try { var saved = localStorage.getItem('theme'); if (saved) root.setAttribute('data-theme', saved); } catch (e) {}
+    btn.addEventListener('click', function () {
+      var current = root.getAttribute('data-theme') ||
+        (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+      var next = current === 'dark' ? 'light' : 'dark';
+      root.setAttribute('data-theme', next);
+      try { localStorage.setItem('theme', next); } catch (e) {}
+    });
+  })();
+
+  // Scroll reveal
+  (function () {
+    var els = document.querySelectorAll('.reveal');
+    if (!('IntersectionObserver' in window)) { els.forEach(function (el) { el.classList.add('in'); }); return; }
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } });
+    }, { threshold: 0.12 });
+    els.forEach(function (el) { io.observe(el); });
+  })();
+
+  // Copy Mermaid
+  document.querySelectorAll('.copy').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var text = document.getElementById(b.dataset.copy).textContent;
+      var done = function () { b.textContent = 'Copied'; setTimeout(function () { b.textContent = 'Copy'; }, 1500); };
+      if (navigator.clipboard) navigator.clipboard.writeText(text).then(done, function () {});
+    });
+  });
+</script>
+</body>
+</html>

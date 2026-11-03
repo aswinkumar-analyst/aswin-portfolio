@@ -80,19 +80,19 @@
     translate: 120% 0;
   }
 
-  /* Glass form control. */
+  /* Glass form control. No backdrop-filter of its own: it sits on the already
+     frosted form panel, where a second blur looked the same but re-ran on every
+     dot-field frame, once per field. */
   .field {
     width: 100%;
     margin-top: 0.5rem;
     border: 1px solid rgb(8 31 54 / 0.14);
     border-radius: 0.75rem;
-    background: rgb(255 255 255 / 0.55);
+    background: rgb(255 255 255 / 0.62);
     padding: 0.75rem 1rem;
     font-size: 1rem;
     color: var(--color-ink);
     outline: none;
-    -webkit-backdrop-filter: blur(8px);
-    backdrop-filter: blur(8px);
     box-shadow: inset 0 1px 2px rgb(8 31 54 / 0.05);
     transition:
       border-color 0.2s var(--ease-ui),

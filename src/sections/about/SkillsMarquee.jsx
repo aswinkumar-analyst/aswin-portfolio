@@ -12,7 +12,17 @@ function Row({ items, reverse }) {
               aria-hidden={copy === 1 || undefined}
               className="inline-flex shrink-0 items-center gap-2.5 glass rounded-full px-5 py-2.5 text-[0.9375rem] font-medium tracking-[-0.01em] text-ink sm:px-6 sm:py-3 sm:text-base"
             >
-              {item.src && <img src={item.src} alt="" className="size-5 object-contain" />}
+              {item.src && (
+                <img
+                  src={item.src}
+                  alt=""
+                  width={20}
+                  height={20}
+                  loading="lazy"
+                  decoding="async"
+                  className="size-5 object-contain"
+                />
+              )}
               {item.label}
             </li>
           )),

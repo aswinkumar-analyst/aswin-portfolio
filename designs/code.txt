@@ -1,41 +1,127 @@
-import { useState } from 'react';
+Here is the **God-Level, Micro-Detail Prompt** designed specifically for ClaudeCode to implement the high-end project showcase modal system, data architecture, and responsive media layout into your SPA portfolio.
 
-export default function ContactForm() {
-  const [result, setResult] = useState("");
+---
 
-  const onSubmit = async (event) => {
-    event.preventDefault();
-    setResult("Sending....");
-    const formData = new FormData(event.target);
-    formData.append("access_key", "ee599dac-abb0-44f2-8b99-c6dfb132ff64");
+### Copy and use this prompt in your code editor / ClaudeCode:
 
-    const response = await fetch("https://api.web3forms.com/submit", {
-      method: "POST",
-      body: formData
-    });
+```markdown
+Act as a Principal Frontend Architect, Senior Motion Designer, and React Specialist. 
 
-    const data = await response.json();
-    if (data.success) {
-      setResult("Form Submitted Successfully");
-      event.target.reset();
-    } else {
-      setResult("Error");
-    }
+I want to implement a production-grade, highly polished **"Projects & Case Study Modal System"** for my SPA portfolio (`aswin-portfolio`). The design must match my sleek dark-mode aesthetic (`#0A0A0A` background, sophisticated glassmorphism, crisp typography tokens, and subtle blue/neutral accents).
+
+---
+
+### 📂 1. Centralized Data Architecture (`src/data/projectsData.ts`)
+Create a centralized TypeScript file for all project data so I can easily add, update, or modify projects in the future without touching component markup.
+
+**TypeScript Interface & Data Structure Required:**
+```typescript
+export interface Project {
+  id: string;
+  title: string;
+  category: string;
+  shortDescription: string;
+  coverImage: string;
+  logoIcon?: string; // Lucide icon name or image url
+  tags: string[];
+  featured?: boolean;
+  
+  // Modal / Deep Case Study Details
+  modalContent: {
+    heroVideoIntro?: {
+      src: string;
+      poster: string;
+    };
+    detailedVideoWalkthrough?: {
+      src: string;
+      poster: string;
+    };
+    overview: string;
+    problemStatement?: string;
+    solutionDetails?: string;
+    architecture?: string[];
+    features: { title: string; description: string; tag?: string }[];
+    techStack: { layer: string; technology: string; reason: string }[];
+    metricsOrStats?: { label: string; value: string }[];
+    galleryImages?: string[];
+    externalLinks?: { label: string; url: string }[];
   };
-
-  return (
-    <form onSubmit={onSubmit}>
-      <input type="text" name="name" required/>
-      <input type="email" name="email" required/>
-      <textarea name="message" required></textarea>
-      <button type="submit">Submit Form</button>
-      <span>{result}</span>
-    </form>
-  );
 }
 
-ee599dac-abb0-44f2-8b99-c6dfb132ff64
+```
 
-https://docs.web3forms.com/getting-started/customizations
+*Provide initial mock data using the **AI HR Assistant** case study details (57-page handbook RAG, LangGraph state machine, Groq 120b, 7 deterministic tools, LangSmith tracing) with cover art `HR_assistant_coverpage.jpg`.*
 
-https://ui.aceternity.com/interactions/paper-plane-send
+---
+
+### 🃏 2. Project Card Component (`ProjectCard.tsx`)
+
+* **Visuals:** High-end glassmorphic card (`bg-neutral-900/80 backdrop-blur-xl border border-white/10 rounded-2xl overflow-hidden group shadow-2xl transition-all duration-300 hover:border-blue-500/50 hover:shadow-blue-500/10`).
+* **Elements:**
+* Project Logo / Icon badge in the top corner.
+* Cover art image with a subtle zoom-in micro-animation on hover (`group-hover:scale-105 transition-transform duration-500`).
+* Category tag pill and crisp project title.
+* Short description excerpt.
+* Tech stack pills (e.g., LangGraph, Python, FastAPI).
+* An interactive "View Case Study →" trigger button or entire card click handler.
+
+
+
+---
+
+### 🖥️ 3. Immersive Project Modal Component (`ProjectModal.tsx`)
+
+When a user clicks any project card, open a stunning SPA modal popup **without changing the browser URL hash or triggering a page reload**.
+
+#### 📐 Layout & Dimensions:
+
+* **Screen Real Estate:** Takes exactly **85% of screen width and height** (`w-[85vw] h-[85vh] max-w-7xl max-h-[900px]`) centered on desktop, and 95vw/95vh on mobile.
+* **Glassmorphic Backdrop:** `fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 md:p-8`.
+* **Container Structure:** `bg-[#121512] border border-neutral-800 rounded-3xl overflow-y-auto shadow-2xl relative flex flex-col` with customized thin scrollbars.
+
+#### 🎬 Media & Video Handling (Dual Size Variants):
+
+* Include a responsive video container system supporting two variants per project:
+1. **Intro / Animation Banner:** Looping silent preview video or animated intro banner.
+2. **Detailed Walkthrough Video:** Full process/demo video with custom play/pause controls, responsive aspect ratio (`aspect-video`), loading states, and fallback poster images (e.g., `HR_assistant_coverpage.jpg`).
+
+
+* Include a clean image gallery grid for architectural diagrams or app screenshots.
+
+#### 📑 Case Study Sections Inside Modal:
+
+Render structured rich content matching professional case study layouts:
+
+* **Header:** Title, category, core metrics grid (e.g., *3 routed question types, 7 deterministic tools*).
+* **The Problem & Solution:** Clean structured cards with callout borders.
+* **System Architecture / Workflow:** Styled breakdown steps.
+* **Tech Stack Table:** Clean zebra-striped or bordered table (`bg-neutral-900/50 border border-neutral-800 rounded-xl`).
+* **Footer / Closing:** Action buttons (Close modal, Demo links if available).
+
+---
+
+### ⚡ 4. Micro-Interactions, Accessibility & Performance
+
+1. **Body Scroll Locking:**
+* When the modal opens, immediately lock background body scrolling (`document.body.style.overflow = 'hidden'`) and restore it on close.
+
+
+2. **Smooth Animations (Framer Motion / Tailwind):**
+* Modal entrance: Fade in backdrop + scale up modal (`initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} transition={{ duration: 0.25, ease: 'easeOut' }}`).
+
+
+3. **Keyboard & Accessibility (a11y):**
+* Pressing the **ESC** key instantly closes the modal.
+* Clicking outside the modal content (on the backdrop overlay) closes the modal.
+* Prominent, easily clickable `✕` Close button positioned at the top-right with `aria-label="Close modal"`.
+
+
+4. **Code Quality & Security:**
+* Zero sensitive API tokens or private user data in code files.
+* Clean memoization and modular component splitting to ensure 60fps scrolling and instant modal rendering.
+
+
+
+Please generate the complete, production-ready React component files (`projectsData.ts`, `ProjectsSection.tsx`, `ProjectCard.tsx`, and `ProjectModal.tsx`) using Tailwind CSS and Lucide icons.
+
+assest/works is location of file about projects 

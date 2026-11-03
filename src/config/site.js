@@ -2,13 +2,12 @@
 
 export const brand = {
   name: "aswin",
-  href: "/",
+  href: "#top", // in-page: scrolls to the top, no reload (see lib/scroll)
 };
 
 export const navLinks = [
   { label: "About", href: "#about" },
   { label: "Work", href: "#work" },
-  { label: "Stack", href: "#stack" },
   { label: "Contact", href: "#contact" },
 ];
 

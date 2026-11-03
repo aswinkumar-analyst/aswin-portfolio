@@ -190,7 +190,11 @@ export default function ContactForm({ flyPlane }) {
         </Field>
 
         <div data-field className="flex min-h-19.5 flex-wrap items-center justify-between gap-4">
-          <div>
+          {/* Sized for the widget before it loads (it mounts on first focus), so
+              nothing below shifts: 78px normal, 144px compact (<380px, see
+              CaptchaField). Full width on phones keeps the button on its own row
+              whether or not the widget is there yet. */}
+          <div className="min-h-19.5 w-full max-[379px]:min-h-36 sm:w-auto">
             {started && (
               <CaptchaField
                 ref={captcha}
@@ -208,7 +212,9 @@ export default function ContactForm({ flyPlane }) {
             disabled={sending}
             className="group/send relative ml-auto inline-flex h-12 items-center gap-2 rounded-xl px-6 text-[0.9375rem] font-semibold tracking-[-0.01em] text-on-sky transition-[opacity,scale,filter] duration-200 ease-ui outline-sky hover:brightness-110 active:scale-[0.96] disabled:cursor-progress disabled:opacity-70"
           >
-            <GlassBg radius={12} tint="rgb(15 104 166 / 0.88)" distortionScale={-90} backgroundOpacity={0.1} />
+            {/* No refraction: under an 88% tint it was invisible, yet the SVG
+                backdrop filter re-ran every frame the dot field redrew. */}
+            <GlassBg radius={12} tint="rgb(15 104 166 / 0.88)" backgroundOpacity={0.1} refraction={false} />
             <span className="relative">{sending ? copy.sending : copy.send}</span>
             <ArrowUpRightIcon className="relative size-4 transition-transform duration-300 ease-ui group-hover/send:translate-x-0.5 group-hover/send:-translate-y-0.5 motion-reduce:transition-none" />
           </button>
