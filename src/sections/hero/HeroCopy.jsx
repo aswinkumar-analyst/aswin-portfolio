@@ -1,11 +1,16 @@
-import { ArrowDownIcon, ArrowUpRightIcon } from "../../components/ui/Icons";
-import GlassBg from "../../components/ui/GlassBg";
+import { useRef } from "react";
+import { EyeIcon } from "../../components/ui/Icons";
+import ResumeButton from "../../components/ui/ResumeButton";
 import { FRAME_GUTTER } from "../../config/frame";
+import { useMagnetic } from "../../hooks/useMagnetic";
 
 // Headline, supporting line and CTAs. Every element the reveal animates
 // carries a data-hero attribute (see useHeroReveal); hidden states are set by
 // GSAP, not CSS, so the copy stays visible if scripts or motion are off.
 export default function HeroCopy({ copy }) {
+  const primary = useRef(null);
+  useMagnetic(primary);
+
   return (
     <div
       className={`absolute inset-x-0 top-0 z-20 pt-[clamp(8rem,22svh,13.5rem)] ${FRAME_GUTTER}`}
@@ -40,22 +45,20 @@ export default function HeroCopy({ copy }) {
         {copy.subtext}
       </p>
 
+      {/* Two glass pills printed like the sky: a halftone fringe along the
+          bottom, and on hover a dot flood blooming from the pointer while
+          the fringe re-inks in the contrast colour (styles/buttons.css). */}
       <div data-hero="ctas" className="mt-7 flex flex-wrap items-center gap-3 lg:mt-9">
-        <a
-          href={copy.primaryCta.href}
-          className="sheen relative inline-flex h-10 items-center gap-2 overflow-hidden rounded-full bg-cloud pr-4 pl-5 text-sm font-semibold tracking-[-0.01em] text-ink shadow-[0_4px_16px_rgb(2_30_50/0.18)] transition-[background-color,scale] duration-150 ease-ui hover:bg-white active:scale-[0.96] lg:h-11 lg:pr-5 lg:pl-6 lg:text-[0.9375rem]"
-        >
-          {copy.primaryCta.label}
-          <ArrowDownIcon className="size-4 translate-y-px" strokeWidth={2} />
+        <a ref={primary} href={copy.primaryCta.href} className="halftone halftone--frost h-12 lg:h-13">
+          <span className="halftone__glint" aria-hidden="true" />
+          <span data-magnet className="halftone__icon" aria-hidden="true">
+            <EyeIcon className="eye" strokeWidth={2} />
+          </span>
+          <span data-magnet className="halftone__label">
+            {copy.primaryCta.label}
+          </span>
         </a>
-        <a
-          href={copy.secondaryCta.href}
-          className="relative inline-flex h-10 items-center gap-1.5 rounded-full px-4 text-sm font-semibold tracking-[-0.01em] text-on-sky transition-[filter,scale] duration-150 ease-ui hover:brightness-125 active:scale-[0.96] lg:h-11 lg:px-5 lg:text-[0.9375rem]"
-        >
-          <GlassBg radius={22} backgroundOpacity={0.12} distortionScale={-90} />
-          <span className="relative">{copy.secondaryCta.label}</span>
-          <ArrowUpRightIcon className="relative size-4" strokeWidth={2} />
-        </a>
+        <ResumeButton className="h-12 lg:h-13" />
       </div>
     </div>
   );

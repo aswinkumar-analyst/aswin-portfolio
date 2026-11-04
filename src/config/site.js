@@ -11,14 +11,21 @@ export const navLinks = [
   { label: "Contact", href: "#contact" },
 ];
 
-export const navCta = { label: "Get started", href: "#contact" };
+
+// Résumé download. Put the PDF at public/resume.pdf; `fileName` is what the
+// visitor's device saves it as. A real link, so long-press / right-click
+// "open in new tab" also works on every device.
+export const resume = {
+  href: "/resume.pdf",
+  fileName: "Aswin-Resume.pdf",
+  label: "Résumé",
+};
 
 export const heroCopy = {
   // Each entry renders on its own line and animates in as one unit.
   headline: ["Gen AI & ", "Automation Engineer"],
   subtext: "Building Intelligent Systems for the Future.",
-  primaryCta: { label: "See selected work", href: "#work" },
-  secondaryCta: { label: "Get in touch", href: "#contact" },
+  primaryCta: { label: "View projects", href: "#work" },
   // Trails behind the plane that crosses the sky.
   banner: "Available for hire | Let's build",
 };

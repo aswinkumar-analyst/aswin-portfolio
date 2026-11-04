@@ -1,7 +1,8 @@
 import { gsap, useGSAP } from "../lib/gsap";
 
 // The opening sequence, one timeline from boot screen to hero:
-//   exit      the boot cube rushes past the camera and its screen clears
+//   exit      the boot hands touch, light bursts from the fingertips, and a
+//             hole opens from that point onto the sky
 //   sky       the sky settles from a slow push-in; birds and the plane fade up
 //   nav       the bar drops in
 //   headline  letters rise out of masks, then the subtext and CTAs
@@ -32,14 +33,22 @@ export function useHeroReveal(scope) {
 
         tl.addLabel("exit", 0);
         if (loader) {
-          tl.call(boot.leave, null, "exit").to(
+          // The tips meet 0.55s after leave(); open just after the burst starts.
+          tl.call(boot.leave, null, "exit").fromTo(
             loader,
-            { autoAlpha: 0, duration: 0.55, ease: "none", immediateRender: false, onComplete: boot.finish },
-            "exit+=0.6",
+            { "--hole": "0vmax" },
+            {
+              "--hole": "85vmax",
+              duration: 1.2,
+              ease: "power3.inOut",
+              immediateRender: false,
+              onComplete: boot.finish,
+            },
+            "exit+=0.7",
           );
         }
 
-        tl.addLabel("sky", "exit+=0.65")
+        tl.addLabel("sky", "exit+=0.75")
           .from(sky, { scale: 1.2, duration: 2.4 }, "sky")
           .from(q("[data-hero='ambient']"), { autoAlpha: 0, duration: 1.4, ease: "none" }, "sky+=0.5")
           .addLabel("nav", "sky+=0.7")

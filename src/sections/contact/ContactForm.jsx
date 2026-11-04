@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
 import { toast } from "sonner";
-import { ArrowUpRightIcon } from "../../components/ui/Icons";
+import { ArrowUpRightIcon, PaperPlaneIcon } from "../../components/ui/Icons";
+import FlightArrow from "../../components/ui/FlightArrow";
 import { contactCopy as copy, contactDetails, formConfig } from "../../config/contact";
 import { gsap } from "../../lib/gsap";
 import { submitContact } from "../../lib/submitContact";
@@ -210,13 +211,21 @@ export default function ContactForm({ flyPlane }) {
           <button
             type="submit"
             disabled={sending}
-            className="group/send relative ml-auto inline-flex h-12 items-center gap-2 rounded-xl px-6 text-[0.9375rem] font-semibold tracking-[-0.01em] text-on-sky transition-[opacity,scale,filter] duration-200 ease-ui outline-sky hover:brightness-110 active:scale-[0.96] disabled:cursor-progress disabled:opacity-70"
+            data-state={sending ? "sending" : undefined}
+            className="send fly-host relative ml-auto inline-flex h-12 items-center gap-2.5 rounded-xl px-6 text-[0.9375rem] font-semibold tracking-[-0.01em] text-on-sky transition-[scale,filter] duration-200 ease-ui outline-sky hover:brightness-110 active:scale-[0.96] disabled:cursor-progress disabled:hover:brightness-100"
           >
             {/* No refraction: under an 88% tint it was invisible, yet the SVG
                 backdrop filter re-ran every frame the dot field redrew. */}
             <GlassBg radius={12} tint="rgb(15 104 166 / 0.88)" backgroundOpacity={0.1} refraction={false} />
             <span className="relative">{sending ? copy.sending : copy.send}</span>
-            <ArrowUpRightIcon className="relative size-4 transition-transform duration-300 ease-ui group-hover/send:translate-x-0.5 group-hover/send:-translate-y-0.5 motion-reduce:transition-none" />
+            {/* Idle: the arrow takes flight on hover. Sending: it becomes a
+                plane gliding over a streaming contrail, until the big paper
+                plane (useContactMotion) takes over. */}
+            <span className="send__icon" aria-hidden="true">
+              <FlightArrow icon={ArrowUpRightIcon} className="send__arrow" />
+              <PaperPlaneIcon className="send__plane" />
+            </span>
+            <span className="send__trail" aria-hidden="true" />
           </button>
         </div>
       </form>
@@ -243,7 +252,7 @@ export default function ContactForm({ flyPlane }) {
             <button
               type="button"
               onClick={sendAnother}
-              className="mt-8 inline-flex h-11 items-center rounded-xl border border-ink/15 px-4.5 text-sm font-semibold text-ink transition-[background-color,color,scale] duration-200 ease-ui outline-sky hover:bg-ink hover:text-cloud active:scale-[0.96]"
+              className="wipe mt-8 inline-flex h-11 items-center rounded-xl border border-ink/15 px-4.5 text-sm font-semibold text-ink transition-[color,border-color,scale] duration-300 ease-ui outline-sky hover:border-ink hover:text-cloud active:scale-[0.96]"
             >
               {copy.sendAnother}
             </button>

@@ -12,6 +12,11 @@ export function setLenis(instance) {
   lenis = instance;
 }
 
+// For overlays that pause the page (the case-study dialog). Null without Lenis.
+export function getLenis() {
+  return lenis;
+}
+
 // Same value the CSS uses for scroll-padding-top, so the nav offset has one source.
 const navOffset = () =>
   parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop) || 0;

@@ -5,7 +5,9 @@
 @import "./hero.css";
 @import "./about.css";
 @import "./work.css";
+@import "./case.css";
 @import "./glass.css";
+@import "./buttons.css";
 
 /*
  * Design tokens ("Aero Blue Telephony", see designs/Main DESIGN.md).

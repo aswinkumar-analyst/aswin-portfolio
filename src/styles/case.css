@@ -1,0 +1,182 @@
+/* Case-study dialog (sections/work/ProjectModal + CaseStudy + CaseVideo). */
+
+/* Locking the page (overflow: hidden on <html>) removes the scrollbar; keeping
+   its gutter stops the page behind the dialog from shifting sideways. */
+html {
+  scrollbar-gutter: stable;
+}
+
+/* Full-viewport, transparent dialog: the backdrop and the sheet are its own
+   children, so GSAP can animate them (::backdrop can't be tweened). */
+.case-dialog {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  background: transparent;
+  color: inherit;
+}
+.case-dialog[open] {
+  display: grid;
+  place-items: center;
+}
+.case-dialog::backdrop {
+  background: transparent;
+}
+
+/* 95% of the screen on phones, 85% (capped) from tablets up. --frame-h also
+   sizes the video screen so the stage never pushes the title off the sheet. */
+.case-frame {
+  --frame-h: 95dvh;
+  width: 95vw;
+  height: var(--frame-h);
+}
+@media (min-width: 768px) {
+  .case-frame {
+    --frame-h: min(85vh, 900px);
+    width: min(85vw, 80rem);
+  }
+}
+
+.case-scroller {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in oklab, var(--color-sky) 45%, transparent) transparent;
+}
+
+.case-screen {
+  max-width: max(16rem, calc((var(--frame-h) - 7rem) * 16 / 9));
+}
+@media (min-width: 768px) {
+  .case-screen {
+    max-width: calc((var(--frame-h) - 19rem) * 16 / 9);
+  }
+  .case-screen--wide {
+    max-width: calc((var(--frame-h) - 19rem) * 21 / 9);
+  }
+}
+.case-screen--portrait {
+  max-width: calc((var(--frame-h) - 9rem) * 4 / 5);
+}
+
+/* Chapter tabs in the sticky bar: scroll sideways when they don't fit, with
+   the ends fading out instead of clipping a label mid-word. */
+.case-tabs {
+  scrollbar-width: none;
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 1rem, #000 calc(100% - 1rem), transparent);
+  mask-image: linear-gradient(to right, transparent, #000 1rem, #000 calc(100% - 1rem), transparent);
+}
+.case-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+/* The key-idea band: a slice of the hero sky. Deep zenith to a lighter
+   horizon, with a low sun warming the top-right corner. */
+.case-sky {
+  background:
+    radial-gradient(70% 90% at 92% 0%, rgb(255 236 196 / 0.28), transparent 60%),
+    radial-gradient(120% 80% at 10% 120%, rgb(255 255 255 / 0.14), transparent 60%),
+    linear-gradient(165deg, var(--color-sky-deep) 0%, var(--color-sky) 55%, #3a8cc4 100%);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.22),
+    0 24px 48px -28px rgb(2 75 117 / 0.7);
+}
+.case-sun {
+  width: 0.5rem;
+  height: 0.5rem;
+  flex: none;
+  border-radius: 999px;
+  background: radial-gradient(circle at 35% 35%, #fffdf6, #ffe9b8 70%);
+  box-shadow: 0 0 8px 1px rgb(255 228 168 / 0.75);
+}
+
+/* Word masks for display text: each word rises out of its own clipped line
+   box. The padding keeps descenders and the top of Bebas caps inside the
+   clip; the negative margin gives that room back so line height is unchanged. */
+.case-word {
+  display: inline-block;
+  overflow: hidden;
+  vertical-align: top;
+  padding-block: 0.06em 0.12em;
+  margin-block: -0.06em -0.12em;
+}
+.case-word > span {
+  display: inline-block;
+}
+
+/* Video scrubber. --p (0-100%) is the played part, set by CaseVideo. */
+.case-seek {
+  --p: 0%;
+  height: 2.5rem;
+  appearance: none;
+  background: transparent;
+  cursor: pointer;
+}
+.case-seek::-webkit-slider-runnable-track {
+  height: 4px;
+  border-radius: 999px;
+  background: linear-gradient(to right, var(--color-cloud) var(--p), rgb(255 255 255 / 0.25) var(--p));
+}
+.case-seek::-webkit-slider-thumb {
+  width: 14px;
+  height: 14px;
+  margin-top: -5px;
+  appearance: none;
+  border-radius: 999px;
+  background: var(--color-cloud);
+  box-shadow: 0 0 0 4px rgb(255 255 255 / 0.18);
+  scale: 0.75;
+  transition: scale 0.15s var(--ease-ui);
+}
+.case-seek::-moz-range-track {
+  height: 4px;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 0.25);
+}
+.case-seek::-moz-range-progress {
+  height: 4px;
+  border-radius: 999px;
+  background: var(--color-cloud);
+}
+.case-seek::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--color-cloud);
+  scale: 0.75;
+  transition: scale 0.15s var(--ease-ui);
+}
+@media (hover: hover) and (pointer: fine) {
+  .case-seek:hover::-webkit-slider-thumb {
+    scale: 1;
+  }
+  .case-seek:hover::-moz-range-thumb {
+    scale: 1;
+  }
+}
+.case-seek:focus-visible {
+  outline: 2px solid var(--color-cloud);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+.case-seek:focus-visible::-webkit-slider-thumb {
+  scale: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .case-seek::-webkit-slider-thumb,
+  .case-seek::-moz-range-thumb {
+    transition: none;
+  }
+}
+
+/* Fullscreen: the wrapper fills the screen, so letterbox instead of crop. */
+:fullscreen video {
+  object-fit: contain;
+}

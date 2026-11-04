@@ -46,12 +46,16 @@
 
     <!-- Boot screen styles live here so they paint before the stylesheet arrives. -->
     <style>
+      /* --hole opens from the centre, where the fingertips meet (useHeroReveal). */
       #loader {
+        --hole: 0vmax;
         position: fixed;
         inset: 0;
         z-index: 100;
-        background: #081f36;
+        background: #05080f;
         touch-action: none;
+        -webkit-mask: radial-gradient(circle, #0000 calc(var(--hole) - 12vmax), #000 var(--hole));
+        mask: radial-gradient(circle, #0000 calc(var(--hole) - 12vmax), #000 var(--hole));
       }
       #loader canvas {
         position: absolute;

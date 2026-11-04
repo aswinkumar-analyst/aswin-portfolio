@@ -1,25 +1,67 @@
-import { useRef } from "react";
-import { ArrowLeftIcon, ArrowRightIcon } from "../../components/ui/Icons";
+import { lazy, Suspense, useCallback, useMemo, useRef, useState } from "react";
+import { ArrowLeftIcon, ArrowRightIcon, ArrowUpRightIcon } from "../../components/ui/Icons";
+import FlightArrow from "../../components/ui/FlightArrow";
+import { useMagnetic } from "../../hooks/useMagnetic";
 import { projects as defaultProjects, workCopy } from "../../config/projects";
 import { gsap, useGSAP } from "../../lib/gsap";
+import { useCaseRoute } from "../../hooks/useCaseRoute";
 import { useProjectCarousel } from "../../hooks/useProjectCarousel";
 import GlassBg from "../../components/ui/GlassBg";
 import Eyebrow from "../../components/ui/Eyebrow";
 import ProjectCard from "./ProjectCard";
 
+// The case-study dialog (and its video player) is its own chunk, fetched the
+// first time a card is hovered or focused, so it is usually ready by the click.
+const loadModal = () => import("./ProjectModal");
+const ProjectModal = lazy(loadModal);
+const MIN_LOOP = 6; // fewer cards than this would leave a gap in the loop on wide screens
+
 const GUTTER_L = "pl-5 sm:pl-8 lg:pl-[7.5%]";
 const GUTTER_R = "pr-5 sm:pr-8 lg:pr-[7.5%]";
 
 const arrowButton =
-  "relative grid size-12 place-items-center rounded-full text-ink transition-[color,scale] duration-300 ease-ui outline-sky hover:text-sky active:scale-95";
+  "fly-host relative grid size-12 place-items-center rounded-full text-ink transition-[color,scale] duration-300 ease-ui outline-sky hover:text-sky active:scale-95";
 
 /**
  * Work: sticky intro on the left, draggable infinite card carousel on the
- * right (stacked on mobile). Projects come from config/projects.js.
+ * right (stacked on mobile). Projects come from config/projects.js. A card
+ * opens its case study in ProjectModal; the open case lives in ?case=.
  */
 export default function WorkSection({ copy = workCopy, projects = defaultProjects }) {
   const root = useRef(null);
-  const { index, prev, next } = useProjectCarousel(root, projects.length);
+  const ctaRef = useRef(null);
+  useMagnetic(ctaRef);
+  const sourceRef = useRef(null); // the cover of the card that was clicked
+  const total = projects.length;
+  // A short list is repeated so the loop never shows a gap. Copies are aria-hidden.
+  const loop = useMemo(
+    () => Array.from({ length: Math.ceil(MIN_LOOP / total) }, () => projects).flat(),
+    [projects, total],
+  );
+  const { index, prev, next } = useProjectCarousel(root, loop.length);
+  const current = index % total;
+
+  const ids = useMemo(() => projects.map((p) => p.id), [projects]);
+  const { caseId, open, swap, close } = useCaseRoute(ids);
+  const [modalUsed, setModalUsed] = useState(Boolean(caseId));
+  if (caseId && !modalUsed) setModalUsed(true);
+
+  const openCase = (id, cover) => {
+    sourceRef.current = cover;
+    open(id);
+  };
+
+  // The card the dialog grows out of and shrinks back into: the one clicked if
+  // it still shows this project, else any card for it that is on screen.
+  const getSource = useCallback((id) => {
+    const clicked = sourceRef.current;
+    if (clicked?.isConnected && clicked.dataset.cover === id) return clicked;
+    for (const el of root.current.querySelectorAll(`[data-cover="${id}"]`)) {
+      const r = el.getBoundingClientRect();
+      if (r.right > 0 && r.left < window.innerWidth && r.bottom > 0 && r.top < window.innerHeight) return el;
+    }
+    return null;
+  }, []);
 
   // Intro entrance: headline words rise out of masks, the rest fades up.
   useGSAP(
@@ -44,7 +86,6 @@ export default function WorkSection({ copy = workCopy, projects = defaultProject
   );
 
   const words = copy.headline.split(" ");
-  const total = projects.length;
 
   return (
     <section
@@ -74,30 +115,49 @@ export default function WorkSection({ copy = workCopy, projects = defaultProject
           <p data-reveal className="mt-6 max-w-md text-lg leading-relaxed text-ink/70">
             {copy.summary}
           </p>
+          {copy.cta && (
+            <div data-reveal className="mt-8 flex flex-wrap items-center gap-3">
+              <a
+                ref={ctaRef}
+                href={copy.cta.href}
+                className="sheen fly-host group/wc relative inline-flex h-12 items-center gap-3 overflow-hidden rounded-full bg-sky pr-1.5 pl-6 text-[0.9375rem] font-semibold tracking-[-0.01em] text-on-sky shadow-[0_10px_24px_-10px_rgb(2_75_117/0.6),inset_0_1px_0_rgb(255_255_255/0.2)] transition-[background-color,scale] duration-150 ease-ui outline-sky hover:bg-sky-deep active:scale-[0.96]"
+              >
+                <span data-magnet className="relative">
+                  {copy.cta.label}
+                </span>
+                <span
+                  data-magnet="chip"
+                  className="relative grid size-9 place-items-center rounded-full bg-white/15 shadow-[inset_0_0_0_1px_rgb(255_255_255/0.25)] transition-[background-color,color] duration-200 ease-ui group-hover/wc:bg-cloud group-hover/wc:text-sky"
+                >
+                  <FlightArrow icon={ArrowUpRightIcon} strokeWidth={2} />
+                </span>
+              </a>
+            </div>
+          )}
         </div>
 
         <div className="min-w-0 flex-1">
           <div data-reveal className={`mb-6 flex items-center justify-between gap-6 sm:mb-8 ${GUTTER_R}`}>
             <div className="flex min-w-0 flex-1 items-center gap-4" aria-live="polite">
               <span className="text-sm font-medium text-ink tabular-nums">
-                {String(index + 1).padStart(2, "0")}
+                {String(current + 1).padStart(2, "0")}
                 <span className="text-ink/65"> / {String(total).padStart(2, "0")}</span>
               </span>
               <span className="relative hidden h-px max-w-40 flex-1 bg-ink/15 sm:block" aria-hidden="true">
                 <span
                   className="absolute inset-0 origin-left bg-sky transition-transform duration-700 ease-ui"
-                  style={{ transform: `scaleX(${(index + 1) / total})` }}
+                  style={{ transform: `scaleX(${(current + 1) / total})` }}
                 />
               </span>
             </div>
             <div className="flex gap-2">
               <button type="button" onClick={prev} aria-label="Previous project" className={arrowButton}>
                 <GlassBg radius={24} backgroundOpacity={0.35} distortionScale={-100} />
-                <ArrowLeftIcon className="relative size-5" />
+                <FlightArrow icon={ArrowLeftIcon} dir="left" className="relative size-5" />
               </button>
               <button type="button" onClick={next} aria-label="Next project" className={arrowButton}>
                 <GlassBg radius={24} backgroundOpacity={0.35} distortionScale={-100} />
-                <ArrowRightIcon className="relative size-5" />
+                <FlightArrow icon={ArrowRightIcon} dir="right" className="relative size-5" />
               </button>
             </div>
           </div>
@@ -112,13 +172,32 @@ export default function WorkSection({ copy = workCopy, projects = defaultProject
             className="cursor-grab touch-pan-y overflow-x-clip outline-sky select-none data-[dragging]:cursor-grabbing"
           >
             <ul className="flex gap-4 sm:gap-5">
-              {projects.map((project, i) => (
-                <ProjectCard key={project.id} project={project} index={i} />
+              {loop.map((project, i) => (
+                <ProjectCard
+                  key={`${project.id}-${i}`}
+                  project={project}
+                  index={i % total}
+                  clone={i >= total}
+                  onOpen={openCase}
+                  onIntent={loadModal}
+                />
               ))}
             </ul>
           </div>
         </div>
       </div>
+
+      {modalUsed && (
+        <Suspense fallback={null}>
+          <ProjectModal
+            projects={projects}
+            caseId={caseId}
+            onClose={close}
+            onNavigate={swap}
+            getSource={getSource}
+          />
+        </Suspense>
+      )}
     </section>
   );
 }

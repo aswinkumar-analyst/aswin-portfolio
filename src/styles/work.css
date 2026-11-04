@@ -23,6 +23,6 @@
 }
 
 .group:hover > .card-edge,
-.group:focus-visible > .card-edge {
+.group:has(:focus-visible) > .card-edge {
   opacity: 1;
 }

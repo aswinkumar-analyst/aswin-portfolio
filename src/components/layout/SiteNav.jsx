@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { brand, navCta, navLinks } from "../../config/site";
+import { brand, navLinks } from "../../config/site";
 import { ArrowUpRightIcon, CloseIcon, MenuIcon } from "../ui/Icons";
 
 // Scroll distance (px) after which the bar condenses into a floating glass pill.
@@ -172,18 +172,6 @@ export default function SiteNav() {
         </ul>
 
         <div className="flex items-center gap-1.5">
-          <a
-            href={navCta.href}
-            className={`sheen group/cta relative inline-flex h-10 items-center gap-1.5 overflow-hidden rounded-xl border px-4.5 text-sm font-semibold tracking-[-0.01em] transition-[background-color,border-color,color,scale] duration-200 ease-ui active:scale-[0.96] ${focusRing} ${
-              scrolled
-                ? "border-sky bg-sky text-on-sky hover:border-sky-deep hover:bg-sky-deep"
-                : "border-glass-border bg-glass text-on-sky shadow-[inset_0_1px_0_rgb(255_255_255/0.25)] backdrop-blur-md hover:bg-white/25"
-            }`}
-          >
-            {navCta.label}
-            <ArrowUpRightIcon className="size-3.5 transition-transform duration-300 ease-ui group-hover/cta:translate-x-0.5 group-hover/cta:-translate-y-0.5" />
-          </a>
-
           <button
             ref={toggleRef}
             type="button"
