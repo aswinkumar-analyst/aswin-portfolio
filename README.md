@@ -10,13 +10,12 @@ npm run dev
 ## Structure
 
 ```text
-design-assets/hero/          Source art: sky PNGs and cessna.webp. Never edited.
-scripts/
-  optimize-hero-assets.py    Converts the sky PNG into responsive WebP
-designs/                     Design docs and reference snippets
+design-assets/hero/          cessna.webp, the plane in the sky banner
+public/                      loader.js (boot screen), resume.pdf, og.jpg, favicon.svg
 src/
   main.jsx, App.jsx          Entry point and page composition
-  assets/hero/               Generated: sky-*.avif/webp, sky-square-*.avif
+  assets/hero/               Sky images: sky-*.avif/webp, sky-square-*.avif
+  assets/works/web/          Work section covers, stills and videos
   config/                    Static data
     site.js                  Brand, nav links, CTAs, hero copy and banner text
     heroAssets.js            Image imports and responsive sky srcset
@@ -45,19 +44,13 @@ override it (for example `SITE_URL=https://example.com npm run build`).
 
 ## Hero images
 
-| Layer | Source (`design-assets/hero/`)           | Used as                                       |
-| ----- | ---------------------------------------- | --------------------------------------------- |
-| Sky   | `sky-clouds-original-crop-4280x1500.png` | `src/assets/hero/sky-*` (via the script)      |
-| Plane | `cessna.webp`                            | Imported directly                             |
+| Layer | File                                    | Notes                                                  |
+| ----- | --------------------------------------- | ------------------------------------------------------ |
+| Sky   | `src/assets/hero/sky-*`                 | AVIF + WebP widths, plus square crops for portrait     |
+| Plane | `design-assets/hero/cessna.webp`        | Imported directly                                      |
 
-To change the sky, replace the source PNG and run:
-
-```bash
-pip install pillow
-python scripts/optimize-hero-assets.py
-```
-
-Any layer can also be overridden with a prop:
+To change the sky, replace those files at the same names and sizes (the
+preload links in `index.html` list the AVIF ones). Any layer can also be overridden with a prop:
 
 ```jsx
 <HeroSection images={{ ...heroImages, plane: myPlane }} />
@@ -66,8 +59,9 @@ Any layer can also be overridden with a prop:
 ## Hero motion
 
 - **Boot screen:** `public/loader.js` and the styles in `index.html` run before
-  the bundle, so they cover the wait for it. The cube is WebGL in a worker, so
-  parsing the bundle can't stall it. It holds for real steps (files, app, fonts,
+  the bundle, so they cover the wait for it. The ASCII hands are a 2D canvas in
+  a worker, so parsing the bundle can't stall it; their cell map and build order
+  are baked into the file. It holds for real steps (files, app, fonts,
   decoded sky), gives up after 10s if the app is running, and offers a reload
   after 20s if it isn't.
 - **Opening:** one timeline in `hooks/useHeroReveal.js`: boot screen exit, sky,

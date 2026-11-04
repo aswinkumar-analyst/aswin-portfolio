@@ -8,17 +8,18 @@ import {
   VolumeOffIcon,
 } from "../../components/ui/Icons";
 import CoverMedia from "./CoverMedia";
+import { pad2, prefersReducedMotion } from "../../lib/utils";
 
 const IDLE_MS = 2400; // controls fade after this long without pointer movement
 
 const clock = (s) => {
   const t = Math.max(0, Math.floor(s || 0));
-  return `${Math.floor(t / 60)}:${String(t % 60).padStart(2, "0")}`;
+  return `${Math.floor(t / 60)}:${pad2(t % 60)}`;
 };
 
 // Autoplay only when it costs the visitor nothing: no reduced motion, no Data Saver.
 const canPreview = () =>
-  !window.matchMedia("(prefers-reduced-motion: reduce)").matches && !navigator.connection?.saveData;
+  !prefersReducedMotion() && !navigator.connection?.saveData;
 
 const controlButton =
   "grid size-10 flex-none place-items-center rounded-full text-on-sky transition-[background-color,scale] duration-150 ease-ui outline-cloud hover:bg-white/15 active:scale-95";

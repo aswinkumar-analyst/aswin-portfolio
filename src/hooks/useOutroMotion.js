@@ -10,7 +10,7 @@ export function useOutroMotion(root) {
       const mm = gsap.matchMedia();
       mm.add("(prefers-reduced-motion: no-preference)", () => {
         const scrollTrigger = { trigger: root.current, start: "top 75%", once: true };
-        gsap.from("[data-outro-word]", { yPercent: 115, duration: 1.1, ease: "expo.out", stagger: 0.07, scrollTrigger });
+        gsap.from("[data-word]", { yPercent: 115, duration: 1.1, ease: "expo.out", stagger: 0.07, scrollTrigger });
         gsap.from("[data-outro-cta]", {
           autoAlpha: 0,
           y: 24,

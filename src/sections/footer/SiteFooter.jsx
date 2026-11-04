@@ -37,7 +37,7 @@ export default function SiteFooter({ links = footer.links, socials = footer.soci
   );
 
   return (
-    <footer ref={root} className="relative z-0 -mt-10 overflow-hidden bg-ink pt-10 text-cloud">
+    <footer ref={root} data-cursor-tone="light" className="relative z-0 -mt-10 overflow-hidden bg-ink pt-10 text-cloud">
       <div
         data-footer-inner
         className="flex flex-col items-center gap-7 px-5 pt-14 pb-12 text-center sm:pt-18 sm:pb-14"

@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
 import { gsap, useGSAP } from "../lib/gsap";
+import { prefersReducedMotion } from "../lib/utils";
 
 const DRAG_THRESHOLD = 6; // px of travel before a press counts as a drag, not a click
 const FLICK_MS = 260; // how far (in ms of release velocity) a flick carries
@@ -26,7 +27,7 @@ export function useProjectCarousel(scope, count) {
       const track = viewport.firstElementChild;
       const cards = gsap.utils.toArray("[data-card]", root);
       const arts = gsap.utils.toArray("[data-art]", root);
-      const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      const reduce = prefersReducedMotion();
       const ac = new AbortController();
       const { signal } = ac;
 

@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { prefersReducedMotion } from "../../lib/utils";
 
 // Faint halftone dot grid behind the About copy. Dots swell and drift away
 // from the pointer (mouse hover or touch drag), and a slow idle wave keeps the
@@ -20,7 +21,7 @@ export default function DotField({ className = "" }) {
     const canvas = canvasRef.current;
     const host = canvas.parentElement;
     const ctx = canvas.getContext("2d");
-    const still = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const still = prefersReducedMotion();
 
     let w = 0;
     let h = 0;

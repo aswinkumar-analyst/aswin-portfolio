@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
-import { toast } from "sonner";
 import { CheckIcon, CopyIcon, MailIcon, PhoneIcon } from "../../components/ui/Icons";
 import { contactDetails } from "../../config/contact";
+import { toast } from "../../lib/toast";
 
 // Copy and check share one cell and cross-fade (opacity, scale, blur).
 const swapIcon = "col-start-1 row-start-1 size-4 transition-[opacity,scale,filter] duration-300 ease-ui";

@@ -1,4 +1,4 @@
-import { Toaster } from "sonner";
+import { lazy, Suspense } from "react";
 import { useSmoothScroll } from "./hooks/useSmoothScroll";
 import SiteNav from "./components/layout/SiteNav";
 import AboutSection from "./sections/about/AboutSection";
@@ -8,6 +8,8 @@ import OutroSection from "./sections/footer/OutroSection";
 import SiteFooter from "./sections/footer/SiteFooter";
 import HeroSection from "./sections/hero/HeroSection";
 import WorkSection from "./sections/work/WorkSection";
+
+const Toaster = lazy(() => import("sonner").then((m) => ({ default: m.Toaster })));
 
 export default function App() {
   useSmoothScroll();
@@ -36,7 +38,6 @@ export default function App() {
           <div className="pointer-events-none sticky top-0 mb-[-100svh] h-svh">
             <DotField />
           </div>
-          {/* Ambient depth: soft sky glows behind the content. */}
           <div aria-hidden="true" className="pointer-events-none absolute inset-0">
             <div className="absolute -top-20 -right-24 size-112 rounded-full bg-sky/15 blur-[120px]" />
             <div className="absolute top-[34%] -left-32 size-[30rem] rounded-full bg-sky/12 blur-[120px]" />
@@ -49,17 +50,19 @@ export default function App() {
         </div>
       </main>
       <SiteFooter />
-      <Toaster
-        position="bottom-center"
-        duration={6000}
-        toastOptions={{
-          classNames: {
-            toast: "!rounded-xl !border-ink/15 !bg-cloud !font-sans !text-ink",
-            error: "!text-error",
-            actionButton: "!rounded-lg !bg-ink !text-cloud",
-          },
-        }}
-      />
+      <Suspense fallback={null}>
+        <Toaster
+          position="bottom-center"
+          duration={6000}
+          toastOptions={{
+            classNames: {
+              toast: "!rounded-xl !border-ink/15 !bg-cloud !font-sans !text-ink",
+              error: "!text-error",
+              actionButton: "!rounded-lg !bg-ink !text-cloud",
+            },
+          }}
+        />
+      </Suspense>
     </>
   );
 }

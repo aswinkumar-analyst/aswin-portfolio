@@ -2,6 +2,7 @@ import Lenis from "lenis";
 import { useEffect, useEffectEvent, useLayoutEffect, useRef, useState } from "react";
 import { gsap } from "../../lib/gsap";
 import { getLenis } from "../../lib/scroll";
+import { prefersReducedMotion as reducedMotion } from "../../lib/utils";
 import CaseStudy from "./CaseStudy";
 
 // Phones held upright get the 4:5 cut of the film, everything else 16:9.
@@ -10,7 +11,6 @@ const MORPH_IN = 0.75;
 const MORPH_OUT = 0.6;
 const MORPH_EASE = "power4.inOut"; // moving on screen: strong in-out, never a plain ease-in
 
-const reducedMotion = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 const px = (n) => `${n.toFixed(2)}px`;
 
 // The transform + clip that make a box laid out at `to` look exactly like the

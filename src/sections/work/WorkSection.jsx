@@ -4,11 +4,13 @@ import FlightArrow from "../../components/ui/FlightArrow";
 import RollLabel from "../../components/ui/RollLabel";
 import { useMagnetic } from "../../hooks/useMagnetic";
 import { projects as defaultProjects, workCopy } from "../../config/projects";
-import { gsap, useGSAP } from "../../lib/gsap";
+import { pad2 } from "../../lib/utils";
 import { useCaseRoute } from "../../hooks/useCaseRoute";
 import { useProjectCarousel } from "../../hooks/useProjectCarousel";
+import { useSectionReveal } from "../../hooks/useSectionReveal";
 import GlassBg from "../../components/ui/GlassBg";
 import Eyebrow from "../../components/ui/Eyebrow";
+import MaskedWords from "../../components/ui/MaskedWords";
 import ProjectCard from "./ProjectCard";
 
 // The case-study dialog (and its video player) is its own chunk, fetched the
@@ -64,29 +66,7 @@ export default function WorkSection({ copy = workCopy, projects = defaultProject
     return null;
   }, []);
 
-  // Intro entrance: headline words rise out of masks, the rest fades up.
-  useGSAP(
-    () => {
-      const mm = gsap.matchMedia();
-      mm.add("(prefers-reduced-motion: no-preference)", () => {
-        const scrollTrigger = { trigger: root.current, start: "top 70%", once: true };
-        gsap.from("[data-word]", { yPercent: 115, duration: 1.1, ease: "expo.out", stagger: 0.07, scrollTrigger });
-        gsap.from("[data-reveal]", {
-          opacity: 0,
-          y: 24,
-          duration: 0.9,
-          ease: "power3.out",
-          stagger: 0.1,
-          delay: 0.25,
-          scrollTrigger,
-        });
-      });
-      return () => mm.revert();
-    },
-    { scope: root },
-  );
-
-  const words = copy.headline.split(" ");
+  useSectionReveal(root, { stagger: 0.1 });
 
   return (
     <section
@@ -103,15 +83,7 @@ export default function WorkSection({ copy = workCopy, projects = defaultProject
             aria-label={copy.headline}
             className="mt-6 text-[clamp(2.25rem,1.2rem+3.4vw,4rem)] leading-[1.05] font-heading font-normal text-balance text-ink"
           >
-            {words.map((word, i) => (
-              <span key={i} aria-hidden="true">
-                <span className="-mb-[0.12em] inline-block overflow-hidden pb-[0.12em] align-bottom">
-                  <span data-word className="inline-block">
-                    {word}
-                  </span>
-                </span>{" "}
-              </span>
-            ))}
+            <MaskedWords text={copy.headline} />
           </h2>
           <p data-reveal className="mt-6 max-w-md text-lg leading-relaxed text-ink/70">
             {copy.summary}
@@ -142,8 +114,8 @@ export default function WorkSection({ copy = workCopy, projects = defaultProject
           <div data-reveal className={`mb-6 flex items-center justify-between gap-6 sm:mb-8 ${GUTTER_R}`}>
             <div className="flex min-w-0 flex-1 items-center gap-4" aria-live="polite">
               <span className="text-sm font-medium text-ink tabular-nums">
-                {String(current + 1).padStart(2, "0")}
-                <span className="text-ink/65"> / {String(total).padStart(2, "0")}</span>
+                {pad2(current + 1)}
+                <span className="text-ink/65"> / {pad2(total)}</span>
               </span>
               <span className="relative hidden h-px max-w-40 flex-1 bg-ink/15 sm:block" aria-hidden="true">
                 <span
@@ -167,6 +139,7 @@ export default function WorkSection({ copy = workCopy, projects = defaultProject
           {/* Clips the row on the left, bleeds off the right edge of the page. */}
           <div
             data-viewport
+            data-cursor="Drag"
             role="region"
             aria-roledescription="carousel"
             aria-label="Selected projects"

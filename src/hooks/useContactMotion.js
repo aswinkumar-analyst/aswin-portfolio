@@ -1,40 +1,17 @@
 import { useCallback } from "react";
 import { planeFacets } from "../config/contact";
 import { gsap, useGSAP } from "../lib/gsap";
+import { prefersReducedMotion } from "../lib/utils";
 
-const REDUCED = "(prefers-reduced-motion: reduce)";
-
-// Section entrance, plus flyPlane(): the form lifts away, a sheet folds into a
-// plane and it flies off the right edge. `onDone` always fires, so the success
-// message still appears for reduced motion or if the animation throws.
+// flyPlane(): the form lifts away, a sheet folds into a plane and it flies off
+// the right edge. `onDone` always fires, so the success message still appears
+// for reduced motion or if the animation throws.
 export function useContactMotion(root) {
-  // Headline words rise out of masks, the rest fades up (same as Work).
-  useGSAP(
-    () => {
-      const mm = gsap.matchMedia();
-      mm.add("(prefers-reduced-motion: no-preference)", () => {
-        const scrollTrigger = { trigger: root.current, start: "top 70%", once: true };
-        gsap.from("[data-word]", { yPercent: 115, duration: 1.1, ease: "expo.out", stagger: 0.07, scrollTrigger });
-        gsap.from("[data-reveal]", {
-          opacity: 0,
-          y: 24,
-          duration: 0.9,
-          ease: "power3.out",
-          stagger: 0.08,
-          delay: 0.25,
-          scrollTrigger,
-        });
-      });
-      return () => mm.revert();
-    },
-    { scope: root },
-  );
-
   const { contextSafe } = useGSAP({ scope: root });
 
   const flyPlane = useCallback(
     (onDone) => {
-      if (window.matchMedia(REDUCED).matches) return onDone();
+      if (prefersReducedMotion()) return onDone();
 
       const play = contextSafe(() => {
         const q = gsap.utils.selector(root);

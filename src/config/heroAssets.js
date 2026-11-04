@@ -1,7 +1,6 @@
 // Hero image layers.
 //
-//   sky      sky-clouds-original-crop-4280x1500.png, converted to AVIF and WebP by
-//            `python scripts/optimize-hero-assets.py` (output in src/assets/hero/)
+//   sky      src/assets/hero/, AVIF and WebP at several widths
 //   sources  AVIF versions tried before `sky`, the WebP fallback. Portrait screens
 //            get a square crop, so phones don't download the whole panorama.
 //   plane    design-assets/hero/cessna.webp, used as-is

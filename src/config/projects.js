@@ -1,7 +1,6 @@
 // Work section copy and projects. Edit, add or remove entries here; components only render it.
 // Card fields drive the carousel; `caseStudy` drives the dialog that opens from a card.
-// Media lives in src/assets/works/web/, built from the originals by
-// `python scripts/optimize-work-assets.py`. Every caseStudy block except
+// Media lives in src/assets/works/web/. Every caseStudy block except
 // `summary` is optional: leave one out and its section (and rail entry) is skipped.
 //
 // Fewer than 6 projects is fine: the carousel repeats the list so the loop never
@@ -27,6 +26,8 @@ import hrPosterAvif from "../assets/works/web/hr-assistant-poster-4x5.avif";
 import hrPosterWebp from "../assets/works/web/hr-assistant-poster-4x5.webp";
 import hrLandscape from "../assets/works/web/hr-assistant-16x9.mp4";
 import hrPortrait from "../assets/works/web/hr-assistant-4x5.mp4";
+import shopifyFlowAvif from "../assets/works/web/shopify-workflow.avif";
+import shopifyFlowWebp from "../assets/works/web/shopify-workflow.webp";
 
 /**
  * @typedef {{ avif: string, webp: string, fallback: string, width: number, height: number, alt: string }} Picture
@@ -54,6 +55,11 @@ import hrPortrait from "../assets/works/web/hr-assistant-4x5.mp4";
  * @property {{ lead: string, points: { title: string, body: string }[] }} [problem]
  * @property {{ lead: string, points: { label?: string, title: string, body: string }[], callout?: string }} [solution]
  * @property {{ lead?: string, lanes: { label?: string, steps: { kind: string, title: string, body: string }[] }[] }} [architecture]
+ * @property {SystemMap} [systemMap]   replaces `architecture` with a sequence diagram (work/blocks/SystemMap)
+ * @property {{ lead?: string, fields: { kind: "title" | "description" | "bullets", name: string, goal: string, body: string }[], note?: string }} [anatomy]
+ *   the fields a pipeline rewrites, drawn as a form (work/blocks/ListingAnatomy)
+ * @property {{ lead?: string, units: number, unitLabel: string, caption: string, figures: { value: string, label: string, how?: string }[] }} [scale]
+ *   one square per unit of work, filled on scroll (work/blocks/CatalogueScale)
  * @property {{ tag: string, title: string, body: string }[]} [features]
  * @property {{ layer: string, technology: string, reason: string }[]} [stack]
  * @property {{ title: string, problem: string, fix: string }[]} [challenges]
@@ -61,6 +67,14 @@ import hrPortrait from "../assets/works/web/hr-assistant-4x5.mp4";
  * @property {{ title: string, items: { title: string, body: string }[] }} [outcomes]
  * @property {string} [note]                                   closing remark (confidentiality etc.)
  * @property {{ label: string, url: string }[]} [links]
+ *
+ * @typedef {object} SystemMap
+ * @property {string} [lead]
+ * @property {string} loop      label of the frame around the steps
+ * @property {{ label: string, span: number }[]} groups   layers over the lanes; spans add up to 4
+ * @property {{ id: string, name: string, short: string, role: string, tone: "control" | "automation" | "model" | "platform" }[]} lanes
+ *   exactly four lifelines
+ * @property {{ title: string, body: string, calls: { from: string, to: string, label: string, reply?: boolean, tag?: string }[] }[]} steps
  */
 
 const cover16x9 = (avif960, avif1920, webp960, webp1920, alt) => ({
@@ -408,19 +422,92 @@ export const projects = [
         callout:
           "Split the work by what each tool is good at: the model only writes copy, and everything that clicks, fills or submits is deterministic automation.",
       },
-      architecture: {
-        lead: "An orchestrator works through the catalogue one listing at a time, running the same six steps for each.",
-        lanes: [
+      anatomy: {
+        lead: "Every listing carries the same three fields. Playwright reads them out of the editor, Claude rewrites them, and Playwright writes them back.",
+        fields: [
           {
-            steps: [
-              { kind: "Orchestrator", title: "Queue the listing", body: "Take the next product from the catalogue and start its workflow." },
-              { kind: "Playwright", title: "Access the listing", body: "Open the listing editor and read the current title, description and bullets." },
-              { kind: "Claude", title: "Send to Claude", body: "The existing content is the starting point for optimisation." },
-              { kind: "Claude", title: "Generate SEO content", body: "Clearer, more informative, search-friendly copy for all three fields." },
-              { kind: "Playwright", title: "Publish the update", body: "Fill the optimised fields in the editor and submit the change." },
-              { kind: "Orchestrator", title: "Move to the next", body: "Repeat until the whole catalogue meets the same standard." },
+            kind: "title",
+            name: "Product title",
+            goal: "Keyword-rich, readable",
+            body: "Rewritten for clarity and search relevance, so it works for shoppers and for search.",
+          },
+          {
+            kind: "description",
+            name: "Product description",
+            goal: "Informative, consistent tone",
+            body: "Long-form copy with the same informative voice on every product, whoever wrote the original.",
+          },
+          {
+            kind: "bullets",
+            name: "Bullet points",
+            goal: "Key features, scannable",
+            body: "Feature-focused highlights, structured and keyword-aware, so the key facts read at a glance.",
+          },
+        ],
+        note: "Illustrative: the lines stand in for listing copy, which is not reproduced here.",
+      },
+      systemMap: {
+        lead: "Three layers: a control loop, browser automation with the model beside it, and Seller Central. One pass handles one listing; the loop runs it for the whole catalogue.",
+        loop: "loop · each of 700+ listings",
+        groups: [
+          { label: "Control layer", span: 1 },
+          { label: "Automation + AI layer", span: 2 },
+          { label: "Amazon", span: 1 },
+        ],
+        lanes: [
+          { id: "orch", name: "Orchestrator", short: "OR", role: "Control loop", tone: "control" },
+          { id: "pw", name: "Playwright", short: "PW", role: "Browser automation", tone: "automation" },
+          { id: "ai", name: "Claude", short: "AI", role: "Content generation", tone: "model" },
+          { id: "sc", name: "Seller Central", short: "SC", role: "Product listings", tone: "platform" },
+        ],
+        steps: [
+          {
+            title: "Queue the listing",
+            body: "The orchestrator takes the next product from the catalogue and starts its workflow.",
+            calls: [{ from: "orch", to: "pw", label: "next listing" }],
+          },
+          {
+            title: "Access the listing",
+            body: "Playwright opens the listing editor in Seller Central and captures the current content.",
+            calls: [
+              { from: "pw", to: "sc", label: "open editor", tag: "read" },
+              { from: "sc", to: "pw", label: "current copy", reply: true },
             ],
           },
+          {
+            title: "Send to Claude",
+            body: "The existing title, description and bullets go to Claude as the starting point.",
+            calls: [{ from: "pw", to: "ai", label: "original copy" }],
+          },
+          {
+            title: "Generate SEO content",
+            body: "Claude rewrites all three fields: clearer, more informative and search-friendly.",
+            calls: [
+              { from: "ai", to: "ai", label: "rewrite 3 fields" },
+              { from: "ai", to: "pw", label: "optimised copy", reply: true },
+            ],
+          },
+          {
+            title: "Publish the update",
+            body: "Playwright fills the optimised fields in the editor and submits the change.",
+            calls: [{ from: "pw", to: "sc", label: "fill and submit", tag: "write" }],
+          },
+          {
+            title: "Move to the next",
+            body: "Control returns to the loop, which picks up the next product until the catalogue is done.",
+            calls: [{ from: "pw", to: "orch", label: "done, next", reply: true }],
+          },
+        ],
+      },
+      scale: {
+        lead: "The same six steps, once per product. Nothing in the loop changes from the first listing to the last, which is what keeps the catalogue on one standard.",
+        units: 700,
+        unitLabel: "listing",
+        caption: "One square per listing. 700 shown; the catalogue was 700+.",
+        figures: [
+          { value: "2,100+", label: "Field rewrites", how: "700+ listings × 3 fields" },
+          { value: "4,200+", label: "Pipeline steps run without a person", how: "700+ listings × 6 steps" },
+          { value: "1", label: "Content standard across the catalogue" },
         ],
       },
       features: [
@@ -518,6 +605,18 @@ export const projects = [
         { layer: "Commerce", technology: "Shopify Admin API", reason: "Product lookup by SKU and tag updates" },
         { layer: "AI", technology: "LLM, called from n8n", reason: "Tag decisions from product information" },
         { layer: "Output", technology: "Execution report", reason: "Updated, failed and unmatched rows in one place" },
+      ],
+      gallery: [
+        {
+          ...still(
+            shopifyFlowAvif,
+            shopifyFlowWebp,
+            1280,
+            698,
+            "Workflow canvas: file upload, Excel parsing, row loop and SKU lookup, then a router that sends matched SKUs through AI tag generation and a Shopify tag update, and unmatched SKUs straight to a status handler, report aggregator and Excel report",
+          ),
+          caption: "The workflow end to end. Matched SKUs take the AI tagging path; unmatched ones go straight to the report.",
+        },
       ],
       outcomes: {
         title: "Business impact",

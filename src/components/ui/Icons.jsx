@@ -18,14 +18,6 @@ function Icon({ children, className = "size-4", strokeWidth = 1.75 }) {
   );
 }
 
-export function ArrowDownIcon(props) {
-  return (
-    <Icon {...props}>
-      <path d="M12 4v15M6 13l6 6 6-6" />
-    </Icon>
-  );
-}
-
 export function ArrowLeftIcon(props) {
   return (
     <Icon {...props}>

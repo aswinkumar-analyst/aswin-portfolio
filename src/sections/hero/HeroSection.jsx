@@ -27,6 +27,7 @@ export default function HeroSection({ images = heroImages, copy = heroCopy }) {
       ref={root}
       id="top"
       aria-label="Introduction"
+      data-cursor-tone="light"
       className="relative h-svh min-h-[34rem] w-full p-[18px] sm:p-[22px]"
     >
       {/* Rounded frame and size container (the cqw/cqh units used by the birds
@@ -49,7 +50,6 @@ export default function HeroSection({ images = heroImages, copy = heroCopy }) {
         <HeroCopy copy={copy} />
         <SkyBanner text={copy.banner} plane={images.plane} />
 
-        {/* Subtle inner border that defines the frame edge, a1mobile style. */}
         <div className="pointer-events-none absolute inset-0 z-40 rounded-[inherit] shadow-[inset_0_0_0_1px_rgb(255_255_255/0.18)]" />
       </div>
     </section>

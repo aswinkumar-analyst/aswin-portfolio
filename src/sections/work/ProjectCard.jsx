@@ -2,6 +2,7 @@ import { ArrowRightIcon, PlayIcon, PlusIcon } from "../../components/ui/Icons";
 import { gsap } from "../../lib/gsap";
 import FlightArrow from "../../components/ui/FlightArrow";
 import CoverMedia from "./CoverMedia";
+import { pad2, prefersReducedMotion } from "../../lib/utils";
 
 const TILT = 9; // max degrees of tilt toward the pointer
 
@@ -36,7 +37,7 @@ export default function ProjectCard({ project, index, clone = false, onOpen, onI
     a.style.setProperty("--my", `${e.clientY - r.top}px`);
     a.style.setProperty("--px", ((px - 0.5) * 2).toFixed(3));
     a.style.setProperty("--py", ((py - 0.5) * 2).toFixed(3));
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    if (prefersReducedMotion()) return;
     gsap.to(a.parentElement, {
       rotateY: (px - 0.5) * TILT * 2,
       rotateX: -(py - 0.5) * TILT * 2,
@@ -69,6 +70,7 @@ export default function ProjectCard({ project, index, clone = false, onOpen, onI
       <div data-card-in className="w-full">
         <div data-tilt className="h-full">
           <article
+            data-cursor="View"
             onPointerMove={move}
             onPointerLeave={leave}
             onPointerEnter={onIntent}
@@ -83,7 +85,7 @@ export default function ProjectCard({ project, index, clone = false, onOpen, onI
               <div className="absolute inset-0 bg-gradient-to-t from-ink-deep/45 to-transparent to-50%" />
 
               <span className="absolute top-4 left-4 rounded-full border border-glass-border bg-glass px-3 py-1 text-xs font-medium tracking-[0.12em] text-on-sky backdrop-blur-md tabular-nums">
-                {String(index + 1).padStart(2, "0")}
+                {pad2(index + 1)}
               </span>
               <span className="absolute top-4 right-4 grid size-10 place-items-center rounded-full bg-cloud text-ink transition-[scale,background-color,color] duration-500 ease-ui group-hover:scale-110 group-hover:bg-sky group-hover:text-on-sky">
                 <PlusIcon className="size-4 transition-transform duration-500 ease-ui group-hover:rotate-90" />

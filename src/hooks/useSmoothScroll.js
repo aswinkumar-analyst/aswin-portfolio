@@ -2,6 +2,7 @@ import Lenis from "lenis";
 import { useEffect } from "react";
 import { gsap, ScrollTrigger } from "../lib/gsap";
 import { scrollToHash, setLenis } from "../lib/scroll";
+import { prefersReducedMotion } from "../lib/utils";
 
 // Page-wide inertial smooth scroll. Lenis drives the scroll position and
 // ScrollTrigger is updated on every Lenis scroll event, with Lenis ticked from
@@ -9,7 +10,7 @@ import { scrollToHash, setLenis } from "../lib/scroll";
 // In-page "#" links are routed through scrollToHash (see lib/scroll).
 export function useSmoothScroll() {
   useEffect(() => {
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    if (prefersReducedMotion()) return;
 
     const lenis = new Lenis({
       // Soft glide + slightly damped wheel: each notch travels ~75% as far and

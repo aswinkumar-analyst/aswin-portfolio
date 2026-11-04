@@ -21,4 +21,15 @@ export default defineConfig(({ mode }) => ({
     // npm run analyze writes the bundle treemap to dist/stats.html
     mode === "analyze" && visualizer({ filename: "dist/stats.html", gzipSize: true }),
   ],
+  build: {
+    rolldownOptions: {
+      output: {
+        // Libraries change far less often than the app, so they get their own
+        // long-lived cached chunk across deploys.
+        codeSplitting: {
+          groups: [{ name: "vendor", test: /node_modules[\\/](react|react-dom|scheduler|gsap|@gsap|lenis)[\\/]/ }],
+        },
+      },
+    },
+  },
 }));

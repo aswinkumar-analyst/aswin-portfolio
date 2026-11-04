@@ -10,7 +10,7 @@
 @import "./buttons.css";
 
 /*
- * Design tokens ("Aero Blue Telephony", see designs/Main DESIGN.md).
+ * Design tokens ("Aero Blue Telephony").
  * Every colour used in components comes from here as a Tailwind utility:
  * bg-sky, text-ink, bg-cloud, border-glass-border, ...
  */

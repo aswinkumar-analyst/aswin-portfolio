@@ -33,7 +33,8 @@ export function useHeroReveal(scope) {
 
         tl.addLabel("exit", 0);
         if (loader) {
-          // The tips meet 0.55s after leave(); open just after the burst starts.
+          // The tips meet 0.55s after leave(); open as white cells start to
+          // wash over the burst, so the light is seen before the sky.
           tl.call(boot.leave, null, "exit").fromTo(
             loader,
             { "--hole": "0vmax" },
@@ -44,11 +45,11 @@ export function useHeroReveal(scope) {
               immediateRender: false,
               onComplete: boot.finish,
             },
-            "exit+=0.7",
+            "exit+=1.3",
           );
         }
 
-        tl.addLabel("sky", "exit+=0.75")
+        tl.addLabel("sky", "exit+=1.35")
           .from(sky, { scale: 1.2, duration: 2.4 }, "sky")
           .from(q("[data-hero='ambient']"), { autoAlpha: 0, duration: 1.4, ease: "none" }, "sky+=0.5")
           .addLabel("nav", "sky+=0.7")

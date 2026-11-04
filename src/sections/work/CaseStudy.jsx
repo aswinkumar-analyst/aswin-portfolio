@@ -4,12 +4,14 @@ import { gsap } from "../../lib/gsap";
 import FlightArrow from "../../components/ui/FlightArrow";
 import CaseVideo from "./CaseVideo";
 import CoverMedia from "./CoverMedia";
+import CatalogueScale from "./blocks/CatalogueScale";
+import ListingAnatomy from "./blocks/ListingAnatomy";
+import SystemMap from "./blocks/SystemMap";
+import { pad2, prefersReducedMotion } from "../../lib/utils";
 
 const PAD = "px-5 sm:px-8 lg:px-12";
 const MODEL_KIND = /llm|ai\b|claude/i; // architecture steps where a model decides
 const WIDE_MQ = "(min-width: 1024px)"; // the pipeline turns horizontal here
-
-const pad2 = (n) => String(n).padStart(2, "0");
 
 // Display text split into words, each inside its own line mask so it can rise
 // out of it (see .case-word). Spaces sit between the masks, so wrapping and
@@ -63,11 +65,13 @@ export default function CaseStudy({ project, index, total, next, portrait, ready
   const sections = [
     cs.overview && { key: "overview", label: "Overview" },
     (cs.problem || cs.solution) && { key: "problem", label: "Problem & solution", tab: "Problem" },
-    cs.architecture && { key: "architecture", label: "Architecture", wide: true },
+    cs.anatomy && { key: "anatomy", label: "Listing anatomy", tab: "Anatomy", wide: true },
+    (cs.systemMap || cs.architecture) && { key: "architecture", label: "Architecture", wide: true },
     cs.features && { key: "features", label: "Core features", tab: "Features" },
     cs.stack && { key: "stack", label: "Tech stack", tab: "Stack" },
     cs.challenges && { key: "challenges", label: "Challenges" },
     cs.gallery && { key: "gallery", label: "Gallery", wide: true },
+    cs.scale && { key: "scale", label: "At scale", tab: "Scale", wide: true },
     cs.outcomes && { key: "outcomes", label: cs.outcomes.title },
   ].filter(Boolean);
   const sid = (key) => `${id}-${key}`;
@@ -132,13 +136,18 @@ export default function CaseStudy({ project, index, total, next, portrait, ready
   //   [data-rise]    content block fades up
   //   [data-diagram] its [data-node] markers pop and [data-draw] connectors draw on
   //   [data-media]   image unclips from an inset while its zoom settles
+  //   [data-play]    a block with its own reveal (work/blocks) gets a case:play event
   useLayoutEffect(() => {
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    if (prefersReducedMotion()) return;
     const root = rootRef.current;
     const q = (sel, el = root) => [...el.querySelectorAll(sel)];
     const wide = window.matchMedia(WIDE_MQ).matches;
     const axis = (el) => (el.dataset.draw === "auto" ? (wide ? "x" : "y") : el.dataset.draw);
-    const clip = { x: ["inset(0% 100% 0% 0%)", "inset(0% 0% 0% 0%)"], y: ["inset(0% 0% 100% 0%)", "inset(0% 0% 0% 0%)"] };
+    const clip = {
+      x: ["inset(0% 100% 0% 0%)", "inset(0% 0% 0% 0%)"],
+      "x-rev": ["inset(0% 0% 0% 100%)", "inset(0% 0% 0% 0%)"], // draws right to left
+      y: ["inset(0% 0% 100% 0%)", "inset(0% 0% 0% 0%)"],
+    };
     const MEDIA_FROM = "inset(7% 5% 7% 5% round 1.5rem)";
     const MEDIA_TO = "inset(0% 0% 0% 0% round 1.5rem)";
 
@@ -147,6 +156,7 @@ export default function CaseStudy({ project, index, total, next, portrait, ready
     const rules = q("[data-rule]");
     const diagrams = q("[data-diagram]");
     const media = q("[data-media]");
+    const plays = q("[data-play]");
     const words = q("[data-split] [data-word]");
     const draws = q("[data-draw]");
     const nodes = q("[data-node]");
@@ -179,6 +189,7 @@ export default function CaseStudy({ project, index, total, next, portrait, ready
         gsap.to(el, { clipPath: MEDIA_TO, duration: 1.3, ease: "expo.out" });
         gsap.to(q("img", el), { scale: 1, duration: 1.6, ease: "expo.out" });
       }
+      if (el.hasAttribute("data-play")) el.dispatchEvent(new CustomEvent("case:play"));
     };
 
     const io = new IntersectionObserver(
@@ -194,7 +205,7 @@ export default function CaseStudy({ project, index, total, next, portrait, ready
       },
       { root: scrollerRef.current, rootMargin: "0px 0px -10% 0px" },
     );
-    const observed = new Set([...rules, ...splits, ...rises, ...diagrams, ...media]);
+    const observed = new Set([...rules, ...splits, ...rises, ...diagrams, ...media, ...plays]);
     observed.forEach((el) => io.observe(el));
     return () => {
       io.disconnect();
@@ -205,7 +216,7 @@ export default function CaseStudy({ project, index, total, next, portrait, ready
   // Metrics count up once the dialog has opened. The final value is in the
   // aria-label, so assistive tech never hears the intermediate numbers.
   useEffect(() => {
-    if (!ready || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    if (!ready || prefersReducedMotion()) return;
     const tweens = [...rootRef.current.querySelectorAll("[data-count]")].map((el, i) => {
       const m = parseMetric(el.dataset.count);
       if (!m) return null;
@@ -333,7 +344,12 @@ export default function CaseStudy({ project, index, total, next, portrait, ready
       };
     },
 
+    anatomy: () => ({ lead: cs.anatomy.lead, body: <ListingAnatomy anatomy={cs.anatomy} /> }),
+
+    scale: () => ({ lead: cs.scale.lead, body: <CatalogueScale scale={cs.scale} /> }),
+
     architecture: () => {
+      if (cs.systemMap) return { lead: cs.systemMap.lead, body: <SystemMap map={cs.systemMap} /> };
       const { lead, lanes } = cs.architecture;
       const kinds = lanes.flatMap((l) => l.steps.map((s) => MODEL_KIND.test(s.kind)));
       const mixed = kinds.includes(true) && kinds.includes(false);

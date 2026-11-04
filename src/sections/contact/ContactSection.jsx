@@ -1,7 +1,9 @@
 import { useRef } from "react";
 import { contactCopy as copy } from "../../config/contact";
 import { useContactMotion } from "../../hooks/useContactMotion";
+import { useSectionReveal } from "../../hooks/useSectionReveal";
 import Eyebrow from "../../components/ui/Eyebrow";
+import MaskedWords from "../../components/ui/MaskedWords";
 import ContactDetails from "./ContactDetails";
 import ContactForm from "./ContactForm";
 import SocialLinks from "./SocialLinks";
@@ -13,10 +15,10 @@ import SocialLinks from "./SocialLinks";
  */
 export default function ContactSection() {
   const root = useRef(null);
+  useSectionReveal(root);
   // Called here, not in ContactForm: a child's layout effects run before this
   // section's ref is attached, which would leave GSAP without a scope.
   const flyPlane = useContactMotion(root);
-  const words = copy.headline.split(" ");
 
   return (
     <section
@@ -37,15 +39,7 @@ export default function ContactSection() {
             aria-label={copy.headline}
             className="mt-6 text-[clamp(2.25rem,1.2rem+3.4vw,4rem)] leading-[1.05] font-heading font-normal text-balance text-ink"
           >
-            {words.map((word, i) => (
-              <span key={i} aria-hidden="true">
-                <span className="-mb-[0.12em] inline-block overflow-hidden pb-[0.12em] align-bottom">
-                  <span data-word className="inline-block">
-                    {word}
-                  </span>
-                </span>{" "}
-              </span>
-            ))}
+            <MaskedWords text={copy.headline} />
           </h2>
           <p data-reveal className="mt-5 max-w-md text-lg leading-relaxed text-pretty text-ink/70">
             {copy.summary}

@@ -176,6 +176,70 @@ html {
   }
 }
 
+/* System map (work/blocks/SystemMap): four lifelines, one down the middle of
+   each quarter of the lanes column. Each step draws its own segment, and steps
+   sit flush, so the lines read as continuous. */
+.seq-lanes {
+  background: linear-gradient(
+      to right,
+      transparent calc(50% - 0.5px),
+      rgb(28 28 30 / 0.13) calc(50% - 0.5px) calc(50% + 0.5px),
+      transparent calc(50% + 0.5px)
+    )
+    0 0 / 25% 100% repeat-x;
+}
+
+/* Listing anatomy (work/blocks/ListingAnatomy). data-state flips between the
+   original copy (ragged lines, no search terms) and the rewrite. --b is the
+   before width as a fraction of after; --i staggers the lines. */
+.anatomy-line {
+  background: rgb(28 28 30 / 0.2);
+  transform-origin: left;
+  transition:
+    scale 0.7s var(--ease-ui) calc(var(--i) * 45ms),
+    background-color 0.5s var(--ease-ui);
+}
+.anatomy-key {
+  transition: opacity 0.4s var(--ease-ui) calc(var(--i) * 45ms + 0.25s);
+}
+.anatomy-status {
+  display: grid;
+  background: rgb(15 104 166 / 0.1);
+  color: var(--color-sky-deep);
+  transition:
+    background-color 0.3s var(--ease-ui),
+    color 0.3s var(--ease-ui);
+}
+.anatomy-status > * {
+  grid-area: 1 / 1;
+  transition: opacity 0.3s var(--ease-ui);
+}
+.anatomy[data-state="before"] {
+  .anatomy-line {
+    scale: var(--b) 1;
+    background: rgb(28 28 30 / 0.12);
+  }
+  .anatomy-key,
+  .anatomy-after {
+    opacity: 0;
+  }
+  .anatomy-status {
+    background: rgb(28 28 30 / 0.06);
+    color: rgb(28 28 30 / 0.55);
+  }
+}
+.anatomy[data-state="after"] .anatomy-before {
+  opacity: 0;
+}
+@media (prefers-reduced-motion: reduce) {
+  .anatomy-line,
+  .anatomy-key,
+  .anatomy-status,
+  .anatomy-status > * {
+    transition: none;
+  }
+}
+
 /* Fullscreen: the wrapper fills the screen, so letterbox instead of crop. */
 :fullscreen video {
   object-fit: contain;

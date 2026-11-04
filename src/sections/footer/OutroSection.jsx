@@ -1,4 +1,5 @@
 import { useRef } from "react";
+import MaskedWords from "../../components/ui/MaskedWords";
 import ResumeButton from "../../components/ui/ResumeButton";
 import { outroCopy } from "../../config/site";
 import { useOutroMotion } from "../../hooks/useOutroMotion";
@@ -18,7 +19,6 @@ const SKY_FADE =
 export default function OutroSection({ copy = outroCopy }) {
   const root = useRef(null);
   useOutroMotion(root);
-  const words = copy.headline.split(" ");
 
   return (
     <section ref={root} aria-labelledby="outro-title" className="relative">
@@ -28,15 +28,7 @@ export default function OutroSection({ copy = outroCopy }) {
           aria-label={copy.headline}
           className="text-[clamp(3rem,1.5rem+6vw,7.5rem)] leading-[0.95] font-heading font-normal text-balance text-ink"
         >
-          {words.map((word, i) => (
-            <span key={i} aria-hidden="true">
-              <span className="-mb-[0.1em] inline-block overflow-hidden pb-[0.1em] align-bottom">
-                <span data-outro-word className="inline-block">
-                  {word}
-                </span>
-              </span>{" "}
-            </span>
-          ))}
+          <MaskedWords text={copy.headline} mask="-mb-[0.1em] pb-[0.1em]" />
         </h2>
         <div data-outro-cta className="mt-7 lg:mt-9">
           <ResumeButton variant="ink" className="h-13 lg:h-14" />

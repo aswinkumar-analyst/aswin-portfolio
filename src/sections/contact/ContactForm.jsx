@@ -1,10 +1,10 @@
 import { useRef, useState } from "react";
-import { toast } from "sonner";
 import { ArrowUpRightIcon, PaperPlaneIcon } from "../../components/ui/Icons";
 import FlightArrow from "../../components/ui/FlightArrow";
 import { contactCopy as copy, contactDetails, formConfig } from "../../config/contact";
 import { gsap } from "../../lib/gsap";
 import { submitContact } from "../../lib/submitContact";
+import { toast } from "../../lib/toast";
 import GlassBg from "../../components/ui/GlassBg";
 import RollLabel from "../../components/ui/RollLabel";
 import { useMagnetic } from "../../hooks/useMagnetic";
