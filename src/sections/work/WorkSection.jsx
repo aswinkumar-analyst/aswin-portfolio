@@ -1,6 +1,7 @@
 import { lazy, Suspense, useCallback, useMemo, useRef, useState } from "react";
 import { ArrowLeftIcon, ArrowRightIcon, ArrowUpRightIcon } from "../../components/ui/Icons";
 import FlightArrow from "../../components/ui/FlightArrow";
+import RollLabel from "../../components/ui/RollLabel";
 import { useMagnetic } from "../../hooks/useMagnetic";
 import { projects as defaultProjects, workCopy } from "../../config/projects";
 import { gsap, useGSAP } from "../../lib/gsap";
@@ -120,16 +121,17 @@ export default function WorkSection({ copy = workCopy, projects = defaultProject
               <a
                 ref={ctaRef}
                 href={copy.cta.href}
-                className="sheen fly-host group/wc relative inline-flex h-12 items-center gap-3 overflow-hidden rounded-full bg-sky pr-1.5 pl-6 text-[0.9375rem] font-semibold tracking-[-0.01em] text-on-sky shadow-[0_10px_24px_-10px_rgb(2_75_117/0.6),inset_0_1px_0_rgb(255_255_255/0.2)] transition-[background-color,scale] duration-150 ease-ui outline-sky hover:bg-sky-deep active:scale-[0.96]"
+                className="pill pill--zenith pill--trail fly-host h-12"
               >
-                <span data-magnet className="relative">
-                  {copy.cta.label}
+                <span className="pill__cloud" aria-hidden="true" />
+                <span className="pill__glint" aria-hidden="true" />
+                <span data-magnet className="pill__label">
+                  <RollLabel text={copy.cta.label} />
                 </span>
-                <span
-                  data-magnet="chip"
-                  className="relative grid size-9 place-items-center rounded-full bg-white/15 shadow-[inset_0_0_0_1px_rgb(255_255_255/0.25)] transition-[background-color,color] duration-200 ease-ui group-hover/wc:bg-cloud group-hover/wc:text-sky"
-                >
-                  <FlightArrow icon={ArrowUpRightIcon} strokeWidth={2} />
+                {/* The sun the arrow takes off from: pale glass at rest,
+                    full daylight on hover. */}
+                <span data-magnet className="pill__sun" aria-hidden="true">
+                  <FlightArrow icon={ArrowUpRightIcon} className="size-[0.8em]" strokeWidth={2.6} />
                 </span>
               </a>
             </div>

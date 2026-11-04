@@ -27,7 +27,7 @@ export default function HeroSection({ images = heroImages, copy = heroCopy }) {
       ref={root}
       id="top"
       aria-label="Introduction"
-      className="relative h-svh min-h-[34rem] w-full p-4 sm:p-6 lg:p-10"
+      className="relative h-svh min-h-[34rem] w-full p-[18px] sm:p-[22px]"
     >
       {/* Rounded frame and size container (the cqw/cqh units used by the birds
           and plane). bg-sky shows through if the image is slow to load. */}

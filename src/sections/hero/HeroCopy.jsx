@@ -1,6 +1,7 @@
 import { useRef } from "react";
 import { EyeIcon } from "../../components/ui/Icons";
 import ResumeButton from "../../components/ui/ResumeButton";
+import RollLabel from "../../components/ui/RollLabel";
 import { FRAME_GUTTER } from "../../config/frame";
 import { useMagnetic } from "../../hooks/useMagnetic";
 
@@ -45,20 +46,21 @@ export default function HeroCopy({ copy }) {
         {copy.subtext}
       </p>
 
-      {/* Two glass pills printed like the sky: a halftone fringe along the
-          bottom, and on hover a dot flood blooming from the pointer while
-          the fringe re-inks in the contrast colour (styles/buttons.css). */}
+      {/* Two liquid-glass capsules cut from the same sky: sunlit cloud glass
+          for the main action, clear sky glass for the résumé. Each carries a
+          cloud bank that billows up on hover (styles/buttons.css). */}
       <div data-hero="ctas" className="mt-7 flex flex-wrap items-center gap-3 lg:mt-9">
-        <a ref={primary} href={copy.primaryCta.href} className="halftone halftone--frost h-12 lg:h-13">
-          <span className="halftone__glint" aria-hidden="true" />
-          <span data-magnet className="halftone__icon" aria-hidden="true">
-            <EyeIcon className="eye" strokeWidth={2} />
+        <a ref={primary} href={copy.primaryCta.href} className="pill pill--cloud h-11 lg:h-12">
+          <span className="pill__cloud" aria-hidden="true" />
+          <span className="pill__glint" aria-hidden="true" />
+          <span data-magnet className="pill__icon" aria-hidden="true">
+            <EyeIcon className="eye" strokeWidth={2.6} />
           </span>
-          <span data-magnet className="halftone__label">
-            {copy.primaryCta.label}
+          <span data-magnet className="pill__label">
+            <RollLabel text={copy.primaryCta.label} />
           </span>
         </a>
-        <ResumeButton className="h-12 lg:h-13" />
+        <ResumeButton className="h-11 lg:h-12" />
       </div>
     </div>
   );

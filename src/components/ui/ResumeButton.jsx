@@ -2,13 +2,15 @@ import { useEffect, useRef, useState } from "react";
 import { resume } from "../../config/site";
 import { useMagnetic } from "../../hooks/useMagnetic";
 import { CheckIcon, DownloadIcon } from "./Icons";
+import RollLabel from "./RollLabel";
 
-// Hero résumé download: the clear-glass half of the halftone pair
+// Hero résumé download: the clear sky-glass half of the liquid-glass pair
 // (styles/buttons.css). A plain link with `download`, so every device uses its
 // native save flow, and long-press or right-click still offers "open in new
 // tab". After a click the icon turns into a check for a moment and screen
 // readers hear that the download started.
-export default function ResumeButton({ className = "" }) {
+// `variant` picks the capsule: "sky" over the hero, "ink" on cream surfaces.
+export default function ResumeButton({ className = "", variant = "sky" }) {
   const ref = useRef(null);
   useMagnetic(ref);
   const [done, setDone] = useState(false);
@@ -29,16 +31,17 @@ export default function ResumeButton({ className = "" }) {
         download={resume.fileName}
         onClick={onClick}
         data-done={done || undefined}
-        className={`halftone halftone--clear fly-host ${className}`}
+        className={`pill pill--${variant} fly-host ${className}`}
       >
-        <span className="halftone__glint" aria-hidden="true" />
-        <span data-magnet className="halftone__icon" aria-hidden="true">
-          <DownloadIcon className="resume__dl" strokeWidth={2} />
-          <CheckIcon className="resume__ok" strokeWidth={2.25} />
+        <span className="pill__cloud" aria-hidden="true" />
+        <span className="pill__glint" aria-hidden="true" />
+        <span data-magnet className="pill__icon" aria-hidden="true">
+          <DownloadIcon className="resume__dl" strokeWidth={2.6} />
+          <CheckIcon className="resume__ok" strokeWidth={2.8} />
         </span>
-        <span data-magnet className="halftone__label">
+        <span data-magnet className="pill__label">
           <span className="sr-only">Download </span>
-          {resume.label}
+          <RollLabel text={resume.label} />
         </span>
       </a>
       <span className="sr-only" aria-live="polite">

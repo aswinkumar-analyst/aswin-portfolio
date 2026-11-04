@@ -1,7 +1,7 @@
 /*
- * Button language: things in flight, printed like the hero sky. Arrows take
- * off like the paper plane; the hero CTAs are glass pills with a halftone
- * fringe, the same print texture as the dithered clouds; Send streams a
+ * Button language: things in flight, made of the hero's sky. Arrows take off
+ * like the paper plane; the hero CTAs are liquid-glass capsules carrying a
+ * little weather (sunlit cloud glass and clear sky glass); Send streams a
  * contrail while it waits. Hover effects are gated to fine pointers, keyboard
  * focus gets the same states, and reduced motion swaps states without movement.
  * Every curve is --ease-flight (a soft exponential out) unless noted.
@@ -9,23 +9,6 @@
 
 :root {
   --ease-flight: cubic-bezier(0.23, 1, 0.32, 1);
-}
-
-/* Registered so the halftone can transition; without support it swaps instantly. */
-@property --dot {
-  syntax: "<length>";
-  inherits: true;
-  initial-value: 0px;
-}
-@property --bloom {
-  syntax: "<percentage>";
-  inherits: true;
-  initial-value: 0%;
-}
-@property --fringe {
-  syntax: "<color>";
-  inherits: true;
-  initial-value: transparent;
 }
 
 @layer components {
@@ -66,143 +49,370 @@
     --pull: 4px;
   }
 
-  /* ---------- Halftone glass pills: the hero CTA pair ----------
-     Layers, back to front:
-       element    glass: translucent gradient + backdrop blur + inner light
-       ::before   flood: a dot screen intersected with a bloom around the
-                  pointer; on hover the dots grow until they merge solid
-       glint      specular highlight that follows the pointer
-       ::after    halftone fringe rising from the bottom edge; always
-                  visible, re-inks to the contrast colour on hover
-     Skins mirror each other:
-       --frost  frosted white glass, ink label; floods sky-deep, label white
-       --clear  clear glass, white label; floods cream, label sky-deep */
-  .halftone {
-    --cell: 6px;
+  /* ---------- Liquid-glass capsules: the hero CTA pair ----------
+     Two pieces of the same sky. --cloud is milky, sunlit glass for the main
+     action (ink label); --sky is clear glass the sky shows through (white
+     label). Layers, back to front:
+       element   glass tint + backdrop blur/saturate + inner light
+       cloud     soft cumulus bank resting on the bottom; rises on hover
+       glint     pointer specular + a sun sheen that sweeps on hover
+       content   icon + letter-roll label
+       ::before  1px specular rim, brightest where light enters and leaves */
+  .pill {
     --ox: calc(50% + var(--mx, 0) * 100%);
     --oy: calc(50% + var(--my, 0) * 100%);
     position: relative;
     isolation: isolate;
     display: inline-flex;
     align-items: center;
-    gap: 0.625rem;
+    gap: 0.4375rem;
     overflow: hidden;
     border-radius: 999px;
-    padding: 0 1.625rem 0 1.25rem;
+    padding-inline: 0.9375rem 1.125rem;
     font-family: var(--font-heading);
-    font-size: 1.3125rem;
+    font-size: 1.25rem;
     line-height: 1;
-    letter-spacing: 0.045em;
+    letter-spacing: 0.04em;
     white-space: nowrap;
-    color: var(--ink-rest);
-    --fringe: var(--fringe-rest);
-    -webkit-backdrop-filter: blur(14px) saturate(160%);
-    backdrop-filter: blur(14px) saturate(160%);
+    color: var(--ink);
+    background: var(--glass);
+    -webkit-backdrop-filter: blur(12px) saturate(180%) brightness(1.06);
+    backdrop-filter: blur(12px) saturate(180%) brightness(1.06);
+    box-shadow: var(--depth);
     transition:
-      color 0.45s var(--ease-flight),
       box-shadow 0.5s var(--ease-flight),
       scale 0.2s var(--ease-flight);
   }
-  /* Bebas sits high in its box; nudge the label onto the optical centre. */
-  .halftone__label {
-    padding-top: 0.12em;
+  .pill::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    border-radius: inherit;
+    padding: 1px;
+    background: var(--rim);
+    -webkit-mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask:
+      linear-gradient(#000 0 0) content-box exclude,
+      linear-gradient(#000 0 0);
+    pointer-events: none;
   }
-  .halftone__icon {
+  /* Lens light: a curved specular arc riding the top edge, and a caustic
+     pool where light gathers along the bottom, as in a drop of water. */
+  .pill::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    border-radius: inherit;
+    background:
+      radial-gradient(48% 34% at 32% 0%, rgb(255 255 255 / var(--arc)), #0000 72%),
+      radial-gradient(42% 26% at 64% 100%, rgb(255 255 255 / var(--caustic)), #0000 75%);
+    pointer-events: none;
+    transition: opacity 0.5s var(--ease-flight);
+  }
+  .pill__cloud,
+  .pill__glint {
+    position: absolute;
+    z-index: -1;
+    pointer-events: none;
+  }
+  /* Cumulus: overlapping soft lobes on a flat base, cut off by the glass. */
+  .pill__cloud {
+    inset: 48% -12% -45%;
+    background:
+      radial-gradient(20% 42% at 14% 50%, var(--puff), #0000 72%),
+      radial-gradient(24% 52% at 36% 36%, var(--puff), #0000 72%),
+      radial-gradient(22% 46% at 58% 46%, var(--puff), #0000 72%),
+      radial-gradient(26% 50% at 82% 40%, var(--puff), #0000 72%),
+      linear-gradient(to top, var(--puff) 45%, #0000 70%);
+    filter: blur(3px);
+    opacity: var(--cloud-rest);
+    transition:
+      translate 1.2s var(--ease-flight),
+      opacity 0.6s var(--ease-flight);
+  }
+  .pill__glint {
+    inset: 0;
+    border-radius: inherit;
+    background:
+      radial-gradient(36% 90% at var(--ox) var(--oy), rgb(255 255 255 / 0.42), #0000 70%),
+      linear-gradient(105deg, #0000 40%, rgb(255 255 255 / 0.5) 48%, rgb(255 255 255 / 0.15) 52%, #0000 58%) 0 0 / 300% 100% no-repeat;
+    opacity: 0;
+    transition: opacity 0.45s var(--ease-flight);
+  }
+  /* Sized in em so the glyphs stand at the label's cap height at every
+     breakpoint; stroke matches the Bebas stem (icons get strokeWidth 2.6).
+     Colour follows the label: ink at rest, --ink-hot once the letters land. */
+  .pill__icon {
     display: grid;
-    width: 1.125rem;
-    height: 1.125rem;
+    flex: none;
+    width: 1em;
+    height: 1em;
+    color: var(--ink);
+    filter: drop-shadow(0 1px 1px var(--emboss, #0000));
+    transition: color 0.45s var(--ease-flight) 0.12s;
   }
-  .halftone__icon > svg {
+  .pill:focus-visible .pill__icon {
+    color: var(--ink-hot, var(--ink));
+  }
+  .pill__icon > svg {
     grid-area: 1 / 1;
     width: 100%;
     height: 100%;
   }
-  .halftone::before,
-  .halftone::after,
-  .halftone__glint {
+  /* Bebas sits high in its box; nudge the label onto the optical centre. */
+  .pill__label {
+    padding-top: 0.12em;
+  }
+  .pill:active {
+    scale: 0.97;
+  }
+  .pill:focus-visible {
+    outline: 2px solid var(--color-on-sky);
+    outline-offset: 3px;
+  }
+
+  .pill--cloud {
+    --ink: var(--color-ink-deep);
+    --ink-hot: var(--color-sky);
+    --emboss: rgb(255 255 255 / 0.7);
+    --glass: linear-gradient(180deg, rgb(255 255 255 / 0.9), rgb(248 247 243 / 0.74));
+    /* Cloud bases sit in the sky's shadow. */
+    --puff: rgb(15 104 166 / 0.16);
+    --cloud-rest: 1;
+    --cloud-hot: 1;
+    --arc: 0.9;
+    --caustic: 0.55;
+    /* Sun from the top right warms the rim; sky blue cools the lower left. */
+    --rim: linear-gradient(200deg, #fff6e4, rgb(255 255 255 / 0.5) 28%, rgb(15 104 166 / 0.22) 62%, rgb(255 255 255 / 0.95));
+    --depth:
+      inset 0 1px 0 rgb(255 255 255 / 0.9),
+      inset 0 -6px 12px -6px rgb(15 104 166 / 0.18),
+      0 1px 2px rgb(2 30 50 / 0.18),
+      0 10px 24px -12px rgb(2 30 50 / 0.55);
+    --depth-hot:
+      inset 0 1px 0 #fff,
+      inset 0 -6px 12px -6px rgb(15 104 166 / 0.24),
+      0 2px 4px rgb(2 30 50 / 0.18),
+      0 16px 32px -14px rgb(2 30 50 / 0.6);
+  }
+  .pill--sky {
+    --ink: var(--color-on-sky);
+    /* Sun-gold: the sky's one warm note, kept pale enough to read on blue. */
+    --ink-hot: #ffe7b3;
+    --emboss: rgb(1 40 80 / 0.35);
+    --glass: linear-gradient(180deg, rgb(255 255 255 / 0.22), rgb(255 255 255 / 0.06));
+    --puff: rgb(255 255 255 / 0.5);
+    --cloud-rest: 0.7;
+    --cloud-hot: 1;
+    --arc: 0.45;
+    --caustic: 0.4;
+    --rim: linear-gradient(200deg, rgb(255 236 200 / 0.95), rgb(255 255 255 / 0.18) 32%, rgb(255 255 255 / 0.06) 62%, rgb(214 232 247 / 0.7));
+    --depth:
+      inset 0 1px 0 rgb(255 255 255 / 0.35),
+      inset 0 -8px 14px -8px rgb(255 255 255 / 0.25),
+      0 10px 24px -14px rgb(2 30 50 / 0.5);
+    --depth-hot:
+      inset 0 1px 0 rgb(255 255 255 / 0.55),
+      inset 0 -8px 16px -8px rgb(255 255 255 / 0.35),
+      0 16px 30px -14px rgb(2 30 50 / 0.55);
+  }
+
+  /* Night glass for cream surfaces (the closing CTA): ink capsule with a
+     sky-blue cloud bank glowing at its base. */
+  .pill--ink {
+    --ink: var(--color-cloud);
+    --emboss: rgb(0 0 0 / 0.4);
+    --glass: linear-gradient(180deg, #2c2c30, var(--color-ink));
+    --puff: rgb(15 104 166 / 0.6);
+    --cloud-rest: 0.5;
+    --cloud-hot: 1;
+    --rim: linear-gradient(160deg, rgb(255 255 255 / 0.3), rgb(255 255 255 / 0.05) 35%, rgb(255 255 255 / 0.02) 62%, rgb(255 255 255 / 0.18));
+    --depth:
+      inset 0 1px 0 rgb(255 255 255 / 0.12),
+      0 1px 2px rgb(8 31 54 / 0.2),
+      0 14px 30px -14px rgb(8 31 54 / 0.6);
+    --depth-hot:
+      inset 0 1px 0 rgb(255 255 255 / 0.2),
+      0 2px 4px rgb(8 31 54 / 0.2),
+      0 20px 36px -14px rgb(8 31 54 / 0.65);
+  }
+  .pill--ink:focus-visible {
+    outline-color: var(--color-sky);
+  }
+
+  /* Zenith: a sliver of the hero sky for cream surfaces, where clear glass
+     would only show cream. Same deep-to-horizon body as the eyebrow pills. */
+  .pill--zenith {
+    --ink: var(--color-on-sky);
+    --ink-hot: #ffe7b3;
+    --emboss: rgb(1 40 80 / 0.35);
+    --glass:
+      radial-gradient(120% 140% at 88% 0%, rgb(255 244 214 / 0.22), #0000 55%),
+      linear-gradient(180deg, var(--color-sky-deep), var(--color-sky) 58%, #3a8cc4);
+    --puff: rgb(255 255 255 / 0.45);
+    --cloud-rest: 0.6;
+    --cloud-hot: 1;
+    --arc: 0.35;
+    --caustic: 0.35;
+    --rim: linear-gradient(200deg, rgb(255 236 200 / 0.85), rgb(255 255 255 / 0.15) 32%, rgb(255 255 255 / 0.05) 62%, rgb(214 232 247 / 0.5));
+    --depth:
+      inset 0 1px 0 rgb(255 255 255 / 0.28),
+      0 1px 2px rgb(2 30 50 / 0.2),
+      0 10px 24px -10px rgb(2 75 117 / 0.6);
+    --depth-hot:
+      inset 0 1px 0 rgb(255 255 255 / 0.4),
+      0 2px 4px rgb(2 30 50 / 0.2),
+      0 18px 32px -12px rgb(2 75 117 / 0.65);
+  }
+  .pill--zenith:focus-visible {
+    outline-color: var(--color-sky);
+  }
+
+  /* Trailing sun chip: the capsule hugs it at the end. */
+  .pill.pill--trail {
+    gap: 0.75rem;
+    padding-inline: 1.375rem 0.3125rem;
+  }
+  /* Rest: pale glass disc. Hot: daylight fades in (::before) and the arrow
+     turns sky-deep, a sun rising behind the plane. */
+  .pill__sun {
+    position: relative;
+    isolation: isolate;
+    display: grid;
+    flex: none;
+    place-items: center;
+    height: calc(100% - 0.625rem);
+    aspect-ratio: 1;
+    border-radius: 50%;
+    color: var(--color-on-sky);
+    background: radial-gradient(circle at 40% 32%, rgb(255 255 255 / 0.32), rgb(255 255 255 / 0.1) 70%);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.45),
+      inset 0 0 0 1px rgb(255 255 255 / 0.22);
+    transition:
+      color 0.45s var(--ease-flight) 0.08s,
+      box-shadow 0.45s var(--ease-flight);
+  }
+  .pill__sun::before {
     content: "";
     position: absolute;
     inset: 0;
     z-index: -1;
     border-radius: inherit;
-    pointer-events: none;
-  }
-  .halftone::before {
-    background: var(--flood);
-    -webkit-mask-image:
-      radial-gradient(circle, #000 calc(var(--dot) - 0.5px), #0000 var(--dot)),
-      radial-gradient(circle at var(--ox) var(--oy), #000 var(--bloom), #0000 calc(var(--bloom) + 30%));
-    mask-image:
-      radial-gradient(circle, #000 calc(var(--dot) - 0.5px), #0000 var(--dot)),
-      radial-gradient(circle at var(--ox) var(--oy), #000 var(--bloom), #0000 calc(var(--bloom) + 30%));
-    -webkit-mask-size: var(--cell) var(--cell), 100% 100%;
-    mask-size: var(--cell) var(--cell), 100% 100%;
-    -webkit-mask-repeat: repeat, no-repeat;
-    mask-repeat: repeat, no-repeat;
-    -webkit-mask-composite: source-in;
-    mask-composite: intersect;
-  }
-  .halftone__glint {
-    background: radial-gradient(70% 140% at var(--ox) 0%, rgb(255 255 255 / 0.4), #0000 60%);
+    background: radial-gradient(circle at 40% 32%, #fffdf6, #ffe7b3 75%);
+    box-shadow: inset 0 1px 0 #fff;
     opacity: 0;
     transition: opacity 0.45s var(--ease-flight);
   }
-  .halftone::after {
-    background: radial-gradient(circle, var(--fringe) 1.1px, #0000 1.6px) 0 0 / 5px 5px;
-    -webkit-mask-image: linear-gradient(to top, #000 10%, #0000 70%);
-    mask-image: linear-gradient(to top, #000 10%, #0000 70%);
-  }
-  .halftone:active {
-    scale: 0.96;
-  }
-
-  .halftone--frost {
-    --ink-rest: var(--color-ink-deep);
-    --ink-hot: var(--color-on-sky);
-    --flood: var(--color-sky-deep);
-    --fringe-rest: rgb(15 104 166 / 0.38);
-    --fringe-hot: rgb(255 255 255 / 0.5);
-    background: linear-gradient(180deg, rgb(255 255 255 / 0.85), rgb(248 247 243 / 0.62));
+  .pill:focus-visible .pill__sun {
+    color: var(--color-sky-deep);
     box-shadow:
-      inset 0 1px 0 rgb(255 255 255 / 0.95),
-      inset 0 0 0 1px rgb(255 255 255 / 0.6),
-      0 10px 24px -10px rgb(2 30 50 / 0.5);
+      0 0 0 3px rgb(255 231 179 / 0.25),
+      0 2px 6px -1px rgb(2 30 50 / 0.35);
   }
-  .halftone--clear {
-    --ink-rest: var(--color-on-sky);
-    --ink-hot: var(--color-sky-deep);
-    --flood: var(--color-cloud);
-    --fringe-rest: rgb(255 255 255 / 0.5);
-    --fringe-hot: rgb(15 104 166 / 0.4);
-    background: linear-gradient(180deg, rgb(255 255 255 / 0.26), rgb(255 255 255 / 0.06));
-    text-shadow: 0 1px 1px rgb(2 30 50 / 0.25);
-    box-shadow:
-      inset 0 1px 0 rgb(255 255 255 / 0.55),
-      inset 0 0 0 1px rgb(255 255 255 / 0.4),
-      0 10px 24px -12px rgb(2 30 50 / 0.45);
-  }
-
-  /* Hot state for keyboard focus (hover gets the same, below). */
-  .halftone:focus-visible {
-    --dot: 5px;
-    --bloom: 100%;
-    --fringe: var(--fringe-hot);
-    color: var(--ink-hot);
-    text-shadow: none;
-  }
-  .halftone:focus-visible .halftone__glint {
+  .pill:focus-visible .pill__sun::before {
     opacity: 1;
   }
-
   @media (min-width: 1024px) {
-    .halftone {
-      font-size: 1.4375rem;
+    .pill.pill--trail {
+      padding-inline: 1.5rem 0.3125rem;
     }
   }
 
+  /* Sky glass for cream surfaces (Send). The hero's --sky capsule is clear
+     glass the sky shows through; on cream there is no sky behind it, so this
+     one carries its own: deep zenith to lit horizon, white cloud bank, the
+     same warm rim. */
+  .pill--azure {
+    --ink: var(--color-on-sky);
+    --ink-hot: #ffe7b3;
+    --emboss: rgb(1 40 80 / 0.4);
+    --glass: linear-gradient(180deg, #3d8fc7 0%, var(--color-sky) 52%, var(--color-sky-deep) 100%);
+    --puff: rgb(255 255 255 / 0.42);
+    --cloud-rest: 0.55;
+    --cloud-hot: 1;
+    --arc: 0.5;
+    --caustic: 0.35;
+    --rim: linear-gradient(200deg, rgb(255 236 200 / 0.95), rgb(255 255 255 / 0.3) 30%, rgb(255 255 255 / 0.08) 62%, rgb(214 232 247 / 0.75));
+    --depth:
+      inset 0 1px 0 rgb(255 255 255 / 0.35),
+      inset 0 -8px 14px -8px rgb(255 255 255 / 0.25),
+      0 1px 2px rgb(2 30 50 / 0.2),
+      0 12px 26px -12px rgb(2 75 117 / 0.6);
+    --depth-hot:
+      inset 0 1px 0 rgb(255 255 255 / 0.55),
+      inset 0 -8px 16px -8px rgb(255 255 255 / 0.35),
+      0 2px 4px rgb(2 30 50 / 0.2),
+      0 18px 34px -14px rgb(2 75 117 / 0.7);
+  }
+  .pill--azure:focus-visible {
+    outline-color: var(--color-sky-deep);
+  }
+
+  /* Send as a capsule: label first, arrow trailing, so the padding flips. */
+  .pill.send {
+    gap: 0.5rem;
+    padding-inline: 1.375rem 1.125rem;
+  }
+  .pill.send:disabled {
+    cursor: progress;
+  }
+  .pill__icon > .send__icon {
+    width: 100%;
+    height: 100%;
+  }
+  .pill.send .send__trail {
+    z-index: 1;
+    bottom: 0.375rem;
+    right: 1.5rem;
+    left: 1.5rem;
+  }
+
+  /* Hot state for keyboard focus (hover gets the same, below). */
+  .pill:focus-visible {
+    box-shadow: var(--depth-hot);
+  }
+  .pill:focus-visible .pill__glint {
+    opacity: 1;
+  }
+  .pill:focus-visible .pill__cloud {
+    opacity: var(--cloud-hot);
+  }
+
+  @media (min-width: 1024px) {
+    .pill {
+      padding-inline: 1.0625rem 1.25rem;
+      font-size: 1.375rem;
+    }
+  }
+
+  /* Letter roll (components/ui/RollLabel.jsx): each letter's copy waits one
+     line below as a text-shadow; on hover the row climbs, letter by letter,
+     and the copy that lands is sunlit (--ink-hot) rather than a repeat.
+     The emboss rides along on both the letter and its copy. */
+  .roll {
+    display: inline-flex;
+    overflow: hidden;
+    /* Headroom so the É accent is not clipped. */
+    margin-block: -0.15em;
+    padding-block: 0.15em;
+  }
+  .roll__c {
+    display: inline-block;
+    text-shadow:
+      0 1px 1px var(--emboss, #0000),
+      0 1.5em 0 var(--ink-hot, currentColor),
+      0 calc(1.5em + 1px) 1px var(--emboss, #0000);
+  }
+
   /* Résumé icon: arrow drops onto the tray; after a click, a check. */
-  .halftone__icon > svg.resume__dl,
-  .halftone__icon > svg.resume__ok {
+  .pill__icon > svg.resume__dl,
+  .pill__icon > svg.resume__ok {
     transition:
       opacity 0.35s var(--ease-flight),
       scale 0.35s var(--ease-flight),
@@ -300,40 +510,53 @@
     .wipe:hover::before {
       clip-path: inset(0);
     }
-    .halftone:hover {
-      --dot: 5px;
-      --bloom: 100%;
-      --fringe: var(--fringe-hot);
-      color: var(--ink-hot);
-      text-shadow: none;
+    .pill:hover {
+      box-shadow: var(--depth-hot);
     }
-    .halftone:hover .halftone__glint {
+    .pill:hover .pill__glint {
       opacity: 1;
     }
-    .halftone--frost:hover {
-      box-shadow:
-        inset 0 1px 0 rgb(255 255 255 / 0.35),
-        inset 0 0 0 1px rgb(255 255 255 / 0.25),
-        0 16px 32px -12px rgb(2 30 50 / 0.6);
+    .pill:hover .pill__cloud {
+      opacity: var(--cloud-hot);
     }
-    .halftone--clear:hover {
+    .pill:hover .pill__icon {
+      color: var(--ink-hot, var(--ink));
+    }
+    .pill:hover .pill__sun {
+      color: var(--color-sky-deep);
       box-shadow:
-        inset 0 1px 0 rgb(255 255 255 / 0.9),
-        inset 0 0 0 1px rgb(255 255 255 / 0.7),
-        0 16px 32px -12px rgb(2 30 50 / 0.5);
+        0 0 0 3px rgb(255 231 179 / 0.25),
+        0 2px 6px -1px rgb(2 30 50 / 0.35);
+    }
+    .pill:hover .pill__sun::before {
+      opacity: 1;
     }
   }
 
   @media (prefers-reduced-motion: no-preference) {
-    .halftone {
+    .pill {
       transition:
-        color 0.45s var(--ease-flight) 0.08s,
         box-shadow 0.5s var(--ease-flight),
         scale 0.2s var(--ease-flight),
-        translate 0.5s var(--ease-flight),
-        --dot 0.8s var(--ease-flight),
-        --bloom 0.65s var(--ease-flight),
-        --fringe 0.6s var(--ease-flight);
+        translate 0.5s var(--ease-flight);
+    }
+    /* The sheen travels only on the way in; leaving, it snaps back unseen. */
+    .pill:focus-visible .pill__glint {
+      background-position: 0 0, 100% 0;
+      transition:
+        opacity 0.45s var(--ease-flight),
+        background-position 0.9s var(--ease-flight);
+    }
+    /* The cloud bank billows up and drifts, as if the button made weather. */
+    .pill:focus-visible .pill__cloud {
+      translate: -6% -14%;
+    }
+
+    .roll__c {
+      transition: translate 0.6s var(--ease-flight) calc(var(--i) * 22ms);
+    }
+    .pill:focus-visible .roll__c {
+      translate: 0 -1.5em;
     }
 
     .fly__icon {
@@ -362,7 +585,7 @@
     .fly-host:focus-visible .dl-arrow {
       translate: 0 2.5px;
     }
-    .halftone:focus-visible .eye {
+    .pill:focus-visible .eye {
       animation: eye-blink 0.5s var(--ease-flight) 0.1s;
     }
 
@@ -375,15 +598,27 @@
   }
 
   @media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
-    /* Glass lifts off the sky a touch. */
-    .halftone:hover {
+    /* The capsule lifts off the sky; a pressed one settles back into it. */
+    .pill:hover {
       translate: 0 -2px;
     }
-    .halftone:hover:active {
+    .pill:hover:active {
       translate: 0 0;
     }
+    .pill:hover .pill__glint {
+      background-position: 0 0, 100% 0;
+      transition:
+        opacity 0.45s var(--ease-flight),
+        background-position 0.9s var(--ease-flight);
+    }
+    .pill:hover .pill__cloud {
+      translate: -6% -14%;
+    }
+    .pill:hover .roll__c {
+      translate: 0 -1.5em;
+    }
     /* The eye blinks once on arrival, then its pupil follows the pointer. */
-    .halftone:hover .eye {
+    .pill:hover .eye {
       animation: eye-blink 0.5s var(--ease-flight) 0.1s;
     }
     .eye-pupil {
@@ -406,6 +641,17 @@
     [data-magnet] {
       translate: calc(var(--mx, 0) * var(--pull) * 2) calc(var(--my, 0) * var(--pull) * 2);
       transition: translate 0.3s var(--ease-flight);
+    }
+    .pill__sun[data-magnet] {
+      transition:
+        translate 0.3s var(--ease-flight),
+        color 0.45s var(--ease-flight) 0.08s,
+        box-shadow 0.45s var(--ease-flight);
+    }
+    .pill__icon[data-magnet] {
+      transition:
+        translate 0.3s var(--ease-flight),
+        color 0.45s var(--ease-flight) 0.12s;
     }
   }
 }

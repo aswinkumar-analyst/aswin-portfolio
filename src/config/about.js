@@ -1,4 +1,14 @@
 // About section copy and skills. Edit text and items here; components only render it.
+import {
+  siClaude,
+  siDocker,
+  siFastapi,
+  siLangchain,
+  siN8n,
+  siPostgresql,
+  siPython,
+  siReact,
+} from "simple-icons";
 
 export const aboutCopy = {
   eyebrow: "About",
@@ -8,27 +18,29 @@ export const aboutCopy = {
 };
 
 // Two marquee rows, scrolling in opposite directions. Each item is
-// { label } for a text chip, or { label, src } to show a logo or SVG
-// (import it, or use a /public path) beside the label.
+// { label } for a plain outline chip (practices, concepts), { label, icon }
+// for a glass chip with a brand logo from simple-icons, or { label, src } for
+// a custom logo image (import it, or use a /public path).
 export const skillRows = [
   [
-    { label: "Python" },
-    { label: "LangChain" },
+    // Alternate logo / no-logo chips so the rhythm stays even.
+    { label: "Python", icon: siPython },
     { label: "OpenAI" },
-    { label: "Claude" },
+    { label: "LangChain", icon: siLangchain },
     { label: "RAG" },
+    { label: "Claude", icon: siClaude },
     { label: "Agents" },
+    { label: "FastAPI", icon: siFastapi },
     { label: "Vector DBs" },
-    { label: "FastAPI" },
   ],
   [
-    { label: "n8n" },
+    { label: "n8n", icon: siN8n },
     { label: "Automation" },
-    { label: "React" },
-    { label: "Docker" },
-    { label: "PostgreSQL" },
+    { label: "React", icon: siReact },
     { label: "Prompt Design" },
+    { label: "Docker", icon: siDocker },
     { label: "Evals" },
+    { label: "PostgreSQL", icon: siPostgresql },
     { label: "MLOps" },
   ],
 ];

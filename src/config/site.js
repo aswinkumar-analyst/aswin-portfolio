@@ -21,11 +21,25 @@ export const resume = {
   label: "Résumé",
 };
 
+// Closing call to action at the foot of the cream card (sections/footer).
+export const outroCopy = {
+  headline: "Let's build what's next.",
+};
+
+// Footer. Social links with an empty href are not rendered: fill them in.
+export const footer = {
+  links: [...navLinks, { label: resume.label, href: resume.href, download: resume.fileName }],
+  socials: [
+    { label: "LinkedIn", href: "" },
+    { label: "GitHub", href: "" },
+  ],
+};
+
 export const heroCopy = {
   // Each entry renders on its own line and animates in as one unit.
   headline: ["Gen AI & ", "Automation Engineer"],
   subtext: "Building Intelligent Systems for the Future.",
-  primaryCta: { label: "View projects", href: "#work" },
+  primaryCta: { label: "Projects", href: "#work" },
   // Trails behind the plane that crosses the sky.
   banner: "Available for hire | Let's build",
 };

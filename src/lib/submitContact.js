@@ -5,23 +5,21 @@ const MESSAGES = {
   network: "Couldn't reach the mail service. Check your connection and try again.",
   timeout: "That took too long, so nothing was sent. Please try again.",
   rate: "Too many messages just now. Please wait a minute and try again.",
-  rejected: "The message was rejected. Complete the security check again and resend.",
+  rejected: "The message was rejected. Please try again.",
   server: "The mail service is having trouble. Please try again shortly.",
 };
 
 // Posts the message to Web3Forms. Resolves on success, throws Error(message)
 // otherwise. Only named fields are sent, never the raw form.
-export async function submitContact({ name, email, topic, message, captchaToken }) {
+export async function submitContact({ name, email, message }) {
   const fields = {
     access_key: formConfig.accessKey,
     from_name: formConfig.fromName,
     // Newlines are flattened so a crafted name can't reshape the subject line.
-    subject: `${topic} from ${name}`.replace(/\s+/g, " "),
+    subject: `Portfolio message from ${name}`.replace(/\s+/g, " "),
     name,
     email, // Web3Forms uses this as the reply-to address.
-    topic,
     message,
-    "h-captcha-response": captchaToken,
   };
 
   let response;

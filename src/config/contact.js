@@ -2,13 +2,11 @@
 // only render it.
 
 // Web3Forms says this key is public by design: it only routes submissions to
-// your inbox and cannot read them. The real gate is hCaptcha, which Web3Forms
-// enforces on its servers once it is enabled in the dashboard.
+// your inbox and cannot read them. Spam is filtered by the hidden botcheck
+// honeypot in the form.
 export const formConfig = {
   endpoint: "https://api.web3forms.com/submit",
   accessKey: "ee599dac-abb0-44f2-8b99-c6dfb132ff64",
-  // Shared sitekey Web3Forms documents for free plans.
-  captchaSitekey: "50b2fe65-b00b-4b9e-ad62-3ba471098be2",
   fromName: "Aswin Portfolio",
   timeoutMs: 15000,
   maxLength: { name: 100, email: 254, message: 4000 },
@@ -17,10 +15,11 @@ export const formConfig = {
 export const contactCopy = {
   eyebrow: "Contact",
   headline: "Have something worth automating?",
-  summary: "Tell me about the role, project or problem, and I'll reply by email.",
-  topicLegend: "What's this about?",
-  topics: ["Job opportunity", "Freelance project", "Collaboration", "Something else"],
-  labels: { name: "Name", email: "Email", message: "Message" },
+  summary: "Hiring for a role, scoping a project or stuck on a manual process? Tell me about it and I'll reply by email.",
+  formTitle: "Write to me",
+  formIntro: "It goes straight to my inbox. A few lines on what you're working on is plenty.",
+  labels: { name: "Your name", email: "Email address", message: "What are you working on?" },
+  socialsLabel: "Or find me on",
   send: "Send message",
   sending: "Sending",
   // {name} and {email} are filled in from the form.
@@ -36,11 +35,19 @@ export const planeFacets = [
   { sheet: "60,10 60,110 60,110 60,10", plane: "112,14 58,70 50,92 50,92", fill: "#0f68a6" },
 ];
 
-// Shown below the form. Fill in the values: anything left empty is not rendered.
+// Shown beside the form. Fill in the values: anything left empty is not rendered.
 export const contactDetails = {
   email: "",
   phone: "", // digits with country code, e.g. "+91 00000 00000"
-  location: "",
-  linkedin: "", // full URL
-  github: "", // full URL
 };
+
+// Icon row under the details. `icon` names a mark in components/ui/BrandIcons.
+// An empty href hides that tile.
+export const socialLinks = [
+  { label: "LinkedIn", icon: "linkedin", href: "https://www.linkedin.com/in/aswin-kumar-2004-" },
+  { label: "GitHub", icon: "github", href: "https://github.com/aswinkumar-analyst" },
+  { label: "Hugging Face", icon: "huggingface", href: "https://huggingface.co/aswin-kumar21" },
+  { label: "Gmail", icon: "gmail", href: "mailto:s.aswinkumar2025@gmail.com" },
+  { label: "Kaggle", icon: "kaggle", href: "https://www.kaggle.com/aswinkumar2025" },
+  { label: "X", icon: "x", href: "https://x.com/Aswin55224894" },
+];

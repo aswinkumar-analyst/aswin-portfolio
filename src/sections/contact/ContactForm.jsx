@@ -6,7 +6,8 @@ import { contactCopy as copy, contactDetails, formConfig } from "../../config/co
 import { gsap } from "../../lib/gsap";
 import { submitContact } from "../../lib/submitContact";
 import GlassBg from "../../components/ui/GlassBg";
-import CaptchaField from "./CaptchaField";
+import RollLabel from "../../components/ui/RollLabel";
+import { useMagnetic } from "../../hooks/useMagnetic";
 import PaperPlane from "./PaperPlane";
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -22,15 +23,19 @@ function validate({ name, email, message }) {
   return errors;
 }
 
+// The label sits inside the control and floats up on focus or once filled
+// (.float in styles/glass.css). It stays a real <label>, so it is always read.
 function Field({ name, label, error, children }) {
   return (
     <div data-field className="flex flex-col">
-      <label htmlFor={`contact-${name}`} className="text-sm font-medium text-ink/70">
-        {label}
-      </label>
-      {children}
+      <div className="float">
+        <label htmlFor={`contact-${name}`} className="float__label">
+          {label}
+        </label>
+        {children}
+      </div>
       {error && (
-        <p id={`contact-${name}-error`} className="mt-2 text-sm text-error">
+        <p id={`contact-${name}-error`} className="mt-2 ps-1 text-sm text-error">
           {error}
         </p>
       )}
@@ -44,6 +49,8 @@ function fieldProps(name, errors, clearError) {
     name,
     maxLength: formConfig.maxLength[name],
     required: true,
+    // A single space keeps :placeholder-shown true until the visitor types.
+    placeholder: " ",
     "aria-invalid": errors[name] ? true : undefined,
     "aria-describedby": errors[name] ? `contact-${name}-error` : undefined,
     onChange: () => clearError(name),
@@ -53,21 +60,15 @@ function fieldProps(name, errors, clearError) {
 /** The form itself. status: idle > sending > flying > sent. */
 export default function ContactForm({ flyPlane }) {
   const form = useRef(null);
-  const captcha = useRef(null);
   const successHeading = useRef(null);
+  const sendButton = useRef(null);
+  useMagnetic(sendButton);
 
   const [status, setStatus] = useState("idle");
   const [errors, setErrors] = useState({});
-  const [started, setStarted] = useState(false);
-  const [token, setToken] = useState(null);
   const [sender, setSender] = useState(null);
 
   const clearError = (name) => setErrors((prev) => (prev[name] ? { ...prev, [name]: undefined } : prev));
-
-  const resetCaptcha = () => {
-    setToken(null);
-    captcha.current?.resetCaptcha();
-  };
 
   const fail = (message) => {
     const { email } = contactDetails;
@@ -86,7 +87,6 @@ export default function ContactForm({ flyPlane }) {
     const values = {
       name: data.get("name").trim(),
       email: data.get("email").trim(),
-      topic: data.get("topic"),
       message: data.get("message").trim(),
     };
 
@@ -97,17 +97,11 @@ export default function ContactForm({ flyPlane }) {
       form.current.elements[firstInvalid].focus();
       return;
     }
-    if (!token) {
-      setStarted(true);
-      fail("Please complete the security check first.");
-      return;
-    }
 
     setStatus("sending");
     try {
-      await submitContact({ ...values, captchaToken: token });
+      await submitContact(values);
     } catch (error) {
-      resetCaptcha(); // tokens are single use
       setStatus("idle");
       fail(error.message);
       return;
@@ -123,7 +117,6 @@ export default function ContactForm({ flyPlane }) {
 
   const sendAnother = () => {
     form.current.reset();
-    resetCaptcha();
     setSender(null);
     setStatus("idle");
     gsap.set(form.current.querySelectorAll("[data-field]"), { clearProps: "all" });
@@ -136,36 +129,32 @@ export default function ContactForm({ flyPlane }) {
   return (
     // Form and success message share one grid cell, so swapping them never
     // changes the page height under Lenis or ScrollTrigger.
-    <div data-reveal className="relative grid rounded-3xl p-5 sm:p-8">
+    <div data-reveal className="relative grid rounded-3xl p-5 sm:p-8 lg:p-10">
       {/* No refraction: at this size the SVG backdrop filter was the page's
           biggest frame cost, and the dots redrawing behind it re-run it every frame. */}
       <GlassBg radius={24} backgroundOpacity={0.4} refraction={false} />
       <form
         ref={form}
         onSubmit={onSubmit}
-        onFocus={() => setStarted(true)}
         noValidate
         inert={status === "flying" || sent}
         aria-busy={sending}
-        className={`relative col-start-1 row-start-1 flex flex-col gap-8 ${sent ? "invisible" : ""}`}
+        aria-labelledby="contact-form-title"
+        className={`relative col-start-1 row-start-1 flex flex-col gap-4 ${sent ? "invisible" : ""}`}
       >
         <input type="checkbox" name="botcheck" tabIndex={-1} autoComplete="off" className="hidden" />
 
-        <fieldset data-field className="m-0 min-w-0 border-0 p-0">
-          <legend className="p-0 text-sm font-medium text-ink/70">{copy.topicLegend}</legend>
-          <div className="mt-3 flex flex-wrap gap-2">
-            {copy.topics.map((topic, i) => (
-              <label key={topic} className="cursor-pointer">
-                <input type="radio" name="topic" value={topic} defaultChecked={i === 0} className="peer sr-only" />
-                <span className="inline-flex h-10 items-center rounded-xl border border-ink/15 px-4 text-sm font-medium text-ink/70 transition-[background-color,border-color,color] duration-200 ease-ui peer-checked:border-sky peer-checked:bg-sky peer-checked:text-on-sky peer-checked:shadow-[0_0_0_4px_rgb(15_104_166/0.16)] peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-sky hover:border-ink/40">
-                  {topic}
-                </span>
-              </label>
-            ))}
-          </div>
-        </fieldset>
+        <div data-field className="mb-4">
+          <h3
+            id="contact-form-title"
+            className="text-[clamp(1.75rem,1.4rem+1vw,2.25rem)] leading-[1.1] font-heading font-normal text-ink"
+          >
+            {copy.formTitle}
+          </h3>
+          <p className="mt-2 max-w-sm text-[0.9375rem] leading-relaxed text-pretty text-ink/65">{copy.formIntro}</p>
+        </div>
 
-        <div className="grid gap-8 sm:grid-cols-2 sm:gap-6">
+        <div className="grid gap-4 sm:grid-cols-2 sm:gap-x-8">
           <Field name="name" label={copy.labels.name} error={errors.name}>
             <input type="text" autoComplete="name" className={fieldClass} {...fieldProps("name", errors, clearError)} />
           </Field>
@@ -182,48 +171,38 @@ export default function ContactForm({ flyPlane }) {
         </div>
 
         <Field name="message" label={copy.labels.message} error={errors.message}>
+          {/* Grows with its text (glass.css, textarea.field), so no resize handle. */}
           <textarea
-            rows={4}
+            rows={2}
             data-lenis-prevent
-            className={`${fieldClass} resize-y`}
+            className={fieldClass}
             {...fieldProps("message", errors, clearError)}
           />
         </Field>
 
-        <div data-field className="flex min-h-19.5 flex-wrap items-center justify-between gap-4">
-          {/* Sized for the widget before it loads (it mounts on first focus), so
-              nothing below shifts: 78px normal, 144px compact (<380px, see
-              CaptchaField). Full width on phones keeps the button on its own row
-              whether or not the widget is there yet. */}
-          <div className="min-h-19.5 w-full max-[379px]:min-h-36 sm:w-auto">
-            {started && (
-              <CaptchaField
-                ref={captcha}
-                onVerify={setToken}
-                onExpire={() => setToken(null)}
-                onError={() => {
-                  setToken(null);
-                  fail("The security check didn't load. Refresh the page and try again.");
-                }}
-              />
-            )}
-          </div>
+        <div data-field className="mt-4 flex items-center">
+          {/* Sky liquid-glass capsule, same build as the hero CTAs (buttons.css,
+              .pill--azure): cloud bank rises, sun sheen sweeps, letters roll and
+              the arrow takes flight on hover. Sending: the arrow becomes a plane
+              gliding over a streaming contrail, until the big paper plane
+              (useContactMotion) takes over. */}
           <button
+            ref={sendButton}
             type="submit"
             disabled={sending}
             data-state={sending ? "sending" : undefined}
-            className="send fly-host relative ml-auto inline-flex h-12 items-center gap-2.5 rounded-xl px-6 text-[0.9375rem] font-semibold tracking-[-0.01em] text-on-sky transition-[scale,filter] duration-200 ease-ui outline-sky hover:brightness-110 active:scale-[0.96] disabled:cursor-progress disabled:hover:brightness-100"
+            className="pill pill--azure send fly-host ml-auto h-12 lg:h-13"
           >
-            {/* No refraction: under an 88% tint it was invisible, yet the SVG
-                backdrop filter re-ran every frame the dot field redrew. */}
-            <GlassBg radius={12} tint="rgb(15 104 166 / 0.88)" backgroundOpacity={0.1} refraction={false} />
-            <span className="relative">{sending ? copy.sending : copy.send}</span>
-            {/* Idle: the arrow takes flight on hover. Sending: it becomes a
-                plane gliding over a streaming contrail, until the big paper
-                plane (useContactMotion) takes over. */}
-            <span className="send__icon" aria-hidden="true">
-              <FlightArrow icon={ArrowUpRightIcon} className="send__arrow" />
-              <PaperPlaneIcon className="send__plane" />
+            <span className="pill__cloud" aria-hidden="true" />
+            <span className="pill__glint" aria-hidden="true" />
+            <span data-magnet className="pill__label">
+              {sending ? copy.sending : <RollLabel text={copy.send} />}
+            </span>
+            <span data-magnet className="pill__icon" aria-hidden="true">
+              <span className="send__icon">
+                <FlightArrow icon={ArrowUpRightIcon} className="send__arrow" strokeWidth={2.6} />
+                <PaperPlaneIcon className="send__plane" strokeWidth={2.4} />
+              </span>
             </span>
             <span className="send__trail" aria-hidden="true" />
           </button>

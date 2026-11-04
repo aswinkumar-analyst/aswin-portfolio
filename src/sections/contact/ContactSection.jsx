@@ -4,10 +4,12 @@ import { useContactMotion } from "../../hooks/useContactMotion";
 import Eyebrow from "../../components/ui/Eyebrow";
 import ContactDetails from "./ContactDetails";
 import ContactForm from "./ContactForm";
+import SocialLinks from "./SocialLinks";
 
 /**
- * Contact: closing section of the cream card. Intro on the left, form on the
- * right (stacked on mobile), direct contact details underneath.
+ * Contact: closing section of the cream card. Two columns from lg up: the
+ * pitch and direct routes on the left, the glass form panel on the right.
+ * Stacked below lg, in the same reading order.
  */
 export default function ContactSection() {
   const root = useRef(null);
@@ -21,11 +23,15 @@ export default function ContactSection() {
       ref={root}
       id="contact"
       aria-labelledby="contact-title"
-      className="relative px-5 pt-4 pb-16 sm:px-8 sm:pb-20 lg:px-[7.5%] lg:pb-24"
+      className="relative px-5 pt-4 pb-16 sm:px-8 sm:pb-20 lg:px-[7.5%] lg:pb-28"
     >
-      <div className="flex flex-col gap-12 lg:flex-row lg:items-start lg:gap-16">
-        <div className="lg:w-[min(26rem,34%)] lg:flex-none">
-          <Eyebrow data-reveal>{copy.eyebrow}</Eyebrow>
+      {/* The form column stays narrow: a contact form reads as short when it
+          is, and line inputs much wider look like rules, not fields. */}
+      <div className="grid gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,34rem)] lg:gap-16 xl:grid-cols-[minmax(0,1fr)_minmax(0,38rem)] xl:gap-24">
+        <div className="flex flex-col lg:pt-2">
+          <Eyebrow data-reveal className="self-start">
+            {copy.eyebrow}
+          </Eyebrow>
           <h2
             id="contact-title"
             aria-label={copy.headline}
@@ -41,18 +47,17 @@ export default function ContactSection() {
               </span>
             ))}
           </h2>
-          <p data-reveal className="mt-6 max-w-md text-lg leading-relaxed text-ink/70">
+          <p data-reveal className="mt-5 max-w-md text-lg leading-relaxed text-pretty text-ink/70">
             {copy.summary}
           </p>
+
+          <ContactDetails />
+          <SocialLinks />
         </div>
 
-        <div className="min-w-0 flex-1">
+        <div className="min-w-0">
           <ContactForm flyPlane={flyPlane} />
         </div>
-      </div>
-
-      <div className="mt-16 sm:mt-20">
-        <ContactDetails />
       </div>
     </section>
   );

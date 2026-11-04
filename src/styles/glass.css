@@ -32,11 +32,11 @@
     background:
       radial-gradient(120% 140% at 12% 0%, rgb(255 244 214 / 0.22), transparent 55%),
       linear-gradient(180deg, var(--color-sky-deep) 0%, var(--color-sky) 58%, #3a8cc4 100%);
-    padding: 0.4375rem 1rem 0.4375rem 0.75rem;
+    padding: 0.5625rem 1.25rem 0.5625rem 0.9375rem;
     font-family: var(--font-mono);
-    font-size: 0.75rem;
+    font-size: 0.8125rem;
     font-weight: 500;
-    line-height: 1rem;
+    line-height: 1.125rem;
     letter-spacing: 0.16em;
     text-transform: uppercase;
     color: var(--color-on-sky);
@@ -45,6 +45,12 @@
       inset 0 1px 0 rgb(255 255 255 / 0.28),
       inset 0 -6px 10px -6px rgb(255 255 255 / 0.25),
       0 6px 16px -8px rgb(2 75 117 / 0.55);
+  }
+  @media (min-width: 1024px) {
+    .eyebrow {
+      padding: 0.625rem 1.375rem 0.625rem 1rem;
+      font-size: 0.875rem;
+    }
   }
   .eyebrow__sky {
     position: absolute;
@@ -67,13 +73,13 @@
   .eyebrow__cloud--far svg {
     left: 18%;
     top: 52%;
-    width: 1.75rem;
+    width: 2rem;
     opacity: 0.18;
   }
   .eyebrow__cloud--near svg {
     left: 62%;
     top: 58%;
-    width: 2.5rem;
+    width: 2.875rem;
     opacity: 0.3;
   }
   /* Low sun with a soft breathing halo. Replaces the "live" dot, which read as
@@ -81,8 +87,8 @@
   .eyebrow__sun {
     position: relative;
     flex: none;
-    width: 0.5rem;
-    height: 0.5rem;
+    width: 0.5625rem;
+    height: 0.5625rem;
     border-radius: 999px;
     background: radial-gradient(circle at 35% 35%, #fffdf6, #ffe9b8 70%);
     box-shadow: 0 0 6px 1px rgb(255 228 168 / 0.7);
@@ -120,39 +126,299 @@
     }
   }
 
-  /* Glass form control. No backdrop-filter of its own: it sits on the already
-     frosted form panel, where a second blur looked the same but re-ran on every
-     dot-field frame, once per field. */
+  /* Line form control: no box, just a hairline the text sits on. Focus draws
+     a sky line in from the leading edge over it (.float::after). Transparent,
+     so the frosted panel does the glass work once for every field. */
   .field {
+    display: block;
     width: 100%;
-    margin-top: 0.5rem;
-    border: 1px solid rgb(8 31 54 / 0.14);
-    border-radius: 0.75rem;
-    background: rgb(255 255 255 / 0.62);
-    padding: 0.75rem 1rem;
-    font-size: 1rem;
+    border: 0;
+    border-bottom: 1px solid rgb(8 31 54 / 0.16);
+    border-radius: 0;
+    background: transparent;
+    /* Top padding leaves room for the floated label (.float). */
+    padding: 1.375rem 0 0.625rem;
+    font-size: 1rem; /* 16px: below this iOS zooms in on focus */
+    line-height: 1.5rem;
     color: var(--color-ink);
+    caret-color: var(--color-sky);
     outline: none;
-    box-shadow: inset 0 1px 2px rgb(8 31 54 / 0.05);
-    transition:
-      border-color 0.2s var(--ease-ui),
-      background-color 0.2s var(--ease-ui),
-      box-shadow 0.2s var(--ease-ui);
+    transition: border-color 0.2s var(--ease-ui);
+  }
+  /* Message grows with its text from 2 lines to about 8, then scrolls.
+     Browsers without field-sizing keep a fixed 3 lines. */
+  textarea.field {
+    height: calc(3lh + 2rem);
+    resize: none;
+  }
+  @supports (field-sizing: content) {
+    textarea.field {
+      field-sizing: content;
+      height: auto;
+      min-height: calc(2lh + 2rem);
+      max-height: calc(8lh + 2rem);
+    }
   }
   .field:hover {
-    border-color: rgb(8 31 54 / 0.3);
+    border-color: rgb(8 31 54 / 0.34);
   }
-  .field:focus {
-    border-color: var(--color-sky);
-    background: rgb(255 255 255 / 0.85);
-    box-shadow: 0 0 0 4px rgb(15 104 166 / 0.16);
-  }
-  .field[aria-invalid="true"] {
-    border-color: var(--color-error);
-    box-shadow: 0 0 0 4px rgb(186 26 26 / 0.12);
-  }
+  /* The placeholder is a single space (see ContactForm): the label does its job. */
   .field::placeholder {
-    color: rgb(28 28 30 / 0.55);
+    color: transparent;
+  }
+  /* Browser autofill paints its own fill; hold it off so the line style stays. */
+  .field:-webkit-autofill {
+    -webkit-text-fill-color: var(--color-ink);
+    transition: background-color 600000s 0s;
+  }
+
+  /* Floating label: rests on the line like a placeholder, then shrinks up on
+     focus or once the field has a value. */
+  .float {
+    position: relative;
+  }
+  .float::after {
+    content: "";
+    position: absolute;
+    inset-inline: 0;
+    bottom: 0;
+    height: 1.5px;
+    background: var(--color-sky);
+    scale: 0 1;
+    transform-origin: left center;
+    pointer-events: none;
+    transition:
+      scale 0.5s var(--ease-flight),
+      background-color 0.2s var(--ease-ui);
+  }
+  .float:has(.field:focus)::after {
+    scale: 1 1;
+  }
+  .float:has(.field[aria-invalid="true"])::after {
+    scale: 1 1;
+    background: var(--color-error);
+  }
+  .float__label {
+    position: absolute;
+    top: 1.375rem;
+    inset-inline-start: 0;
+    max-width: 100%;
+    overflow: hidden;
+    font-size: 1rem;
+    line-height: 1.5rem;
+    color: rgb(28 28 30 / 0.58);
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    pointer-events: none;
+    transform-origin: left top;
+    transition:
+      translate 0.25s var(--ease-ui),
+      scale 0.25s var(--ease-ui),
+      color 0.2s var(--ease-ui);
+  }
+  .float:has(.field:focus) .float__label,
+  .float:has(.field:not(:placeholder-shown)) .float__label {
+    translate: 0 -1.125rem;
+    scale: 0.78;
+    font-weight: 500;
+  }
+  /* Kept apart: an unknown pseudo voids a whole selector list. */
+  .float:has(.field:-webkit-autofill) .float__label {
+    translate: 0 -1.125rem;
+    scale: 0.78;
+    font-weight: 500;
+  }
+  .float:has(.field:focus) .float__label {
+    color: var(--color-sky);
+  }
+  .float:has(.field[aria-invalid="true"]) .float__label {
+    color: var(--color-error);
+  }
+
+  /* Direct contact route (ContactDetails): round glass chip that fills with
+     sky when the row is hovered or its link is focused. */
+  .route {
+    transition: background-color 0.25s var(--ease-ui);
+  }
+  .route__chip {
+    display: grid;
+    flex: none;
+    place-items: center;
+    width: 3rem;
+    height: 3rem;
+    border: 1px solid rgb(255 255 255 / 0.8);
+    border-radius: 999px;
+    background-color: rgb(255 255 255 / 0.65);
+    color: var(--color-sky);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.9),
+      0 0 0 1px rgb(8 31 54 / 0.06),
+      0 6px 14px -8px rgb(8 31 54 / 0.25);
+    transition:
+      background-color 0.3s var(--ease-ui),
+      color 0.3s var(--ease-ui),
+      box-shadow 0.3s var(--ease-ui),
+      scale 0.3s var(--ease-ui);
+  }
+  .route:has(a:focus-visible) {
+    background: rgb(255 255 255 / 0.45);
+  }
+  .route:has(a:focus-visible) .route__chip {
+    background-color: var(--color-sky);
+    color: var(--color-on-sky);
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .route:hover {
+      background: rgb(255 255 255 / 0.45);
+    }
+    .route:hover .route__chip {
+      background-color: var(--color-sky);
+      color: var(--color-on-sky);
+      box-shadow:
+        inset 0 1px 0 rgb(255 255 255 / 0.3),
+        0 8px 18px -8px rgb(2 75 117 / 0.55);
+      scale: 1.04;
+    }
+  }
+
+  /* Social tile (SocialLinks): a square of the hero's liquid glass. Milky
+     sunlit tint, 1px specular rim, a curved light arc on the top edge. On
+     hover/focus it lifts, a sun sheen sweeps across and the ink mark turns
+     sky. A small ink tag names it from above. */
+  .social {
+    position: relative;
+    isolation: isolate;
+    display: grid;
+    place-items: center;
+    width: 3.5rem;
+    height: 3.5rem;
+    border-radius: 1rem;
+    background: linear-gradient(180deg, rgb(255 255 255 / 0.82), rgb(248 247 243 / 0.5));
+    -webkit-backdrop-filter: blur(10px) saturate(170%);
+    backdrop-filter: blur(10px) saturate(170%);
+    color: rgb(28 28 30 / 0.74);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.95),
+      inset 0 -6px 12px -6px rgb(15 104 166 / 0.14),
+      0 1px 2px rgb(2 30 50 / 0.1),
+      0 10px 22px -12px rgb(2 30 50 / 0.4);
+    outline-color: var(--color-sky);
+    transition:
+      color 0.35s var(--ease-flight),
+      box-shadow 0.5s var(--ease-flight),
+      translate 0.5s var(--ease-flight),
+      scale 0.2s var(--ease-flight);
+  }
+  /* Rim: warm where the sun enters (top right), cool sky at the lower left. */
+  .social::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    background: linear-gradient(200deg, #fff6e4, rgb(255 255 255 / 0.5) 28%, rgb(15 104 166 / 0.2) 62%, rgb(255 255 255 / 0.95));
+    -webkit-mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask:
+      linear-gradient(#000 0 0) content-box exclude,
+      linear-gradient(#000 0 0);
+    pointer-events: none;
+  }
+  /* Lens arc on top, plus the sun sheen parked off the left edge. */
+  .social::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    border-radius: inherit;
+    background:
+      radial-gradient(60% 40% at 34% 0%, rgb(255 255 255 / 0.95), #0000 72%),
+      linear-gradient(105deg, #0000 38%, rgb(255 255 255 / 0.85) 48%, rgb(255 255 255 / 0.2) 54%, #0000 62%) 100% 0 / 300% 100% no-repeat;
+    pointer-events: none;
+  }
+  .social__icon {
+    width: 1.5rem;
+    height: 1.5rem;
+    filter: drop-shadow(0 1px 0 rgb(255 255 255 / 0.8));
+    transition: scale 0.5s var(--ease-flight);
+  }
+  .social__tip {
+    position: absolute;
+    bottom: calc(100% + 0.5rem);
+    left: 50%;
+    border-radius: 0.5rem;
+    background: var(--color-ink);
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+    line-height: 1rem;
+    color: var(--color-cloud);
+    white-space: nowrap;
+    opacity: 0;
+    translate: -50% 0.25rem;
+    pointer-events: none;
+    transition:
+      opacity 0.2s var(--ease-ui),
+      translate 0.25s var(--ease-ui);
+  }
+  .social:active {
+    scale: 0.95;
+  }
+  .social {
+    --social-hot:
+      inset 0 1px 0 #fff,
+      inset 0 -6px 12px -6px rgb(15 104 166 / 0.22),
+      0 2px 4px rgb(2 30 50 / 0.12),
+      0 16px 30px -14px rgb(2 30 50 / 0.5);
+  }
+  .social:focus-visible {
+    color: var(--color-sky);
+    box-shadow: var(--social-hot);
+  }
+  .social:focus-visible .social__tip {
+    opacity: 1;
+    translate: -50% 0;
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .social:hover {
+      color: var(--color-sky);
+      box-shadow: var(--social-hot);
+    }
+    .social:hover .social__tip {
+      opacity: 1;
+      translate: -50% 0;
+    }
+  }
+  /* Movement only where motion is welcome: lift, icon swell, sheen sweep
+     (travels on the way in only; leaving, it snaps back unseen). */
+  @media (prefers-reduced-motion: no-preference) {
+    .social:focus-visible {
+      translate: 0 -3px;
+    }
+    .social:focus-visible .social__icon {
+      scale: 1.1;
+    }
+    .social:focus-visible::after {
+      background-position: 0 0, 0 0;
+      transition: background-position 0.9s var(--ease-flight);
+    }
+  }
+  @media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+    .social:hover {
+      translate: 0 -3px;
+    }
+    .social:hover:active {
+      translate: 0 -1px;
+    }
+    .social:hover .social__icon {
+      scale: 1.1;
+    }
+    .social:hover::after {
+      background-position: 0 0, 0 0;
+      transition: background-position 0.9s var(--ease-flight);
+    }
   }
 
   @media (prefers-reduced-motion: no-preference) {
@@ -174,7 +440,7 @@
 
   @media (prefers-reduced-transparency: reduce) {
     .glass,
-    .field {
+    .social {
       background: rgb(255 255 255 / 0.96);
       -webkit-backdrop-filter: none;
       backdrop-filter: none;
